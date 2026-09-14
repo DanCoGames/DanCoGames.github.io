@@ -1,141 +1,91 @@
-
 const $ = id => document.getElementById(id);
 
 const state = {
-    files: [],
-    selected: 0,
-    images: [],
-    processed: []
+  files: [],
+  selected: 0,
+  images: [],
+  processed: []
 };
 
 const fileInput = $("fileInput");
 const dropzone = $("dropzone");
 
-
-// ==============================
-// FILE INPUT
-// ==============================
-
 fileInput.addEventListener("change", e => {
-    addFiles([...e.target.files]);
+  addFiles([...e.target.files]);
 });
 
-["dragenter", "dragover"].forEach(type => {
-    dropzone.addEventListener(type, e => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.add("drag");
-    });
-});
+["dragenter", "dragover"].forEach(x =>
+  dropzone.addEventListener(x, e => {
+    e.preventDefault();
+    dropzone.classList.add("drag");
+  })
+);
 
-["dragleave", "drop"].forEach(type => {
-    dropzone.addEventListener(type, e => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.remove("drag");
-    });
-});
+["dragleave", "drop"].forEach(x =>
+  dropzone.addEventListener(x, e => {
+    e.preventDefault();
+    dropzone.classList.remove("drag");
+  })
+);
 
 dropzone.addEventListener("drop", e => {
-    addFiles([...e.dataTransfer.files]);
+  addFiles([...e.dataTransfer.files]);
 });
 
-
-// ==============================
-// ADD FILES
-// ==============================
-
 function addFiles(files) {
+  files = files.filter(f => f.type.startsWith("image/"));
 
-    files = files.filter(file =>
-        file.type.startsWith("image/")
-    );
+  state.files.push(...files);
+  state.images.push(...files.map(() => null));
 
-    if (!files.length) return;
+  renderList();
 
-    state.files.push(...files);
-    state.images.push(...files.map(() => null));
-
-    renderList();
-
-    if (state.files.length === files.length) {
-        state.selected = 0;
-        loadSelected();
-    }
+  if (state.files.length && !state.images[state.selected]) {
+    loadSelected();
+  }
 }
-
-
-// ==============================
-// FILE LIST
-// ==============================
 
 function renderList() {
+  $("imageCount").textContent = state.files.length;
 
-    $("imageCount").textContent = state.files.length;
+  const list = $("fileList");
+  list.innerHTML = "";
 
-    const list = $("fileList");
+  state.files.forEach((f, i) => {
+    const el = document.createElement("div");
 
-    list.innerHTML = "";
+    el.className =
+      "file-item" + (i === state.selected ? " active" : "");
 
-    state.files.forEach((file, index) => {
+    el.textContent = f.name;
 
-        const item = document.createElement("div");
+    el.onclick = () => {
+      state.selected = i;
+      renderList();
+      loadSelected();
+    };
 
-        item.className =
-            "file-item" +
-            (index === state.selected ? " active" : "");
-
-        item.textContent = file.name;
-
-        item.title = file.name;
-
-        item.addEventListener("click", () => {
-
-            state.selected = index;
-
-            renderList();
-
-            loadSelected();
-        });
-
-        list.appendChild(item);
-    });
+    list.appendChild(el);
+  });
 }
-
-
-// ==============================
-// LOAD SELECTED IMAGE
-// ==============================
 
 function loadSelected() {
+  const file = state.files[state.selected];
 
-    const file = state.files[state.selected];
+  if (!file) return;
 
-    if (!file) return;
+  $("selectedName").textContent = file.name;
 
-    $("selectedName").textContent = file.name;
+  const img = new Image();
 
-    const img = new Image();
+  img.onload = () => {
+    state.images[state.selected] = img;
+    updateRanges();
+    updatePreview();
+  };
 
-    img.onload = () => {
-
-        state.images[state.selected] = img;
-
-        updateRanges();
-        updatePreview();
-    };
-
-    img.onerror = () => {
-        alert("Could not load this image.");
-    };
-
-    img.src = URL.createObjectURL(file);
+  img.src = URL.createObjectURL(file);
 }
-
-
-// ==============================
-// CONTROLS
-// ==============================
 
 const width = $("width");
 const height = $("height");
@@ -147,405 +97,399 @@ const ox = $("offsetX");
 const oy = $("offsetY");
 const outputFormat = $("outputFormat");
 
-
-// ==============================
-// ASPECT RATIO
-// ==============================
-
 ratio.addEventListener("change", () => {
+  if (ratio.value !== "custom" && lock.checked) {
+    height.value = Math.max(
+      1,
+      Math.round(+width.value / +ratio.value)
+    );
 
-    if (
-        ratio.value !== "custom" &&
-        lock.checked
-    ) {
-
-        height.value = Math.max(
-            1,
-            Math.round(
-                Number(width.value) /
-                Number(ratio.value)
-            )
-        );
-
-        updateRanges();
-        updatePreview();
-    }
+    updateRanges();
+    updatePreview();
+  }
 });
-
 
 width.addEventListener("input", () => {
+  if (lock.checked && ratio.value !== "custom") {
+    height.value = Math.max(
+      1,
+      Math.round(+width.value / +ratio.value)
+    );
+  }
 
-    if (
-        lock.checked &&
-        ratio.value !== "custom"
-    ) {
-
-        height.value = Math.max(
-            1,
-            Math.round(
-                Number(width.value) /
-                Number(ratio.value)
-            )
-        );
-    }
-
-    updateRanges();
-    updatePreview();
+  updateRanges();
+  updatePreview();
 });
-
 
 height.addEventListener("input", () => {
+  if (lock.checked && ratio.value !== "custom") {
+    width.value = Math.max(
+      1,
+      Math.round(+height.value * +ratio.value)
+    );
+  }
 
-    if (
-        lock.checked &&
-        ratio.value !== "custom"
-    ) {
+  updateRanges();
+  updatePreview();
+});
 
-        width.value = Math.max(
-            1,
-            Math.round(
-                Number(height.value) *
-                Number(ratio.value)
-            )
-        );
-    }
-
+[mode, zoom, ox, oy].forEach(x =>
+  x.addEventListener("input", () => {
     updateRanges();
     updatePreview();
-});
-
-
-[mode, zoom, ox, oy].forEach(element => {
-
-    element.addEventListener("input", () => {
-
-        updateRanges();
-        updatePreview();
-
-    });
-
-});
-
-
-// ==============================
-// UPDATE RANGES
-// ==============================
+  })
+);
 
 function updateRanges() {
+  const w = Math.max(1, +width.value || 1);
+  const h = Math.max(1, +height.value || 1);
+  const z = Math.max(1, +zoom.value);
 
-    const w = Math.max(
-        1,
-        Number(width.value) || 1
-    );
+  ox.max = Math.max(0, Math.floor(w - w / z));
+  oy.max = Math.max(0, Math.floor(h - h / z));
 
-    const h = Math.max(
-        1,
-        Number(height.value) || 1
-    );
+  ox.value = Math.min(+ox.value, +ox.max);
+  oy.value = Math.min(+oy.value, +oy.max);
 
-    const z = Math.max(
-        1,
-        Number(zoom.value)
-    );
+  $("zoomOut").textContent =
+    Number(zoom.value).toFixed(1) + "×";
 
+  $("xOut").textContent = ox.value;
+  $("yOut").textContent = oy.value;
 
-    ox.max = Math.max(
-        0,
-        Math.floor(w - w / z)
-    );
-
-    oy.max = Math.max(
-        0,
-        Math.floor(h - h / z)
-    );
-
-
-    ox.value = Math.min(
-        Number(ox.value),
-        Number(ox.max)
-    );
-
-    oy.value = Math.min(
-        Number(oy.value),
-        Number(oy.max)
-    );
-
-
-    $("zoomOut").textContent =
-        Number(zoom.value).toFixed(1) + "×";
-
-    $("xOut").textContent = ox.value;
-
-    $("yOut").textContent = oy.value;
-
-
-    $("previewDimensions").textContent =
-        `${w} × ${h}`;
+  $("previewDimensions").textContent =
+    `${w} × ${h}`;
 }
 
+function transform(src, w, h, m, z, x, y) {
+  const c = document.createElement("canvas");
 
-// ==============================
-// TRANSFORM IMAGE
-// ==============================
+  c.width = w;
+  c.height = h;
 
-function transform(
-    source,
-    w,
-    h,
-    resizeMode,
-    zoomAmount,
-    offsetX,
-    offsetY
-) {
+  const ctx = c.getContext("2d");
 
-    const canvas =
-        document.createElement("canvas");
+  let sx = 0;
+  let sy = 0;
+  let sw = src.naturalWidth;
+  let sh = src.naturalHeight;
 
-    canvas.width = w;
-    canvas.height = h;
+  if (m === "stretch") {
+    ctx.drawImage(src, 0, 0, w, h);
+    return c;
+  }
 
-    const ctx = canvas.getContext("2d");
+  if (m === "fit") {
+    const s = Math.min(w / sw, h / sh);
 
+    const dw = sw * s;
+    const dh = sh * s;
 
-    // Important for JPG
-    // JPG cannot contain transparency.
+    // White background for JPG/WebP/PNG compatibility
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, w, h);
 
+    ctx.drawImage(
+      src,
+      (w - dw) / 2,
+      (h - dh) / 2,
+      dw,
+      dh
+    );
+  } else {
+    const target = w / h;
+    const source = sw / sh;
 
-    const sw = source.naturalWidth;
-    const sh = source.naturalHeight;
-
-
-    // ==========================
-    // STRETCH
-    // ==========================
-
-    if (resizeMode === "stretch") {
-
-        ctx.drawImage(
-            source,
-            0,
-            0,
-            w,
-            h
-        );
-
-        return applyZoom(
-            canvas,
-            w,
-            h,
-            zoomAmount,
-            offsetX,
-            offsetY
-        );
-    }
-
-
-    // ==========================
-    // FIT
-    // ==========================
-
-    if (resizeMode === "fit") {
-
-        const scale = Math.min(
-            w / sw,
-            h / sh
-        );
-
-        const dw = sw * scale;
-        const dh = sh * scale;
-
-        ctx.drawImage(
-            source,
-            (w - dw) / 2,
-            (h - dh) / 2,
-            dw,
-            dh
-        );
-
-        return applyZoom(
-            canvas,
-            w,
-            h,
-            zoomAmount,
-            offsetX,
-            offsetY
-        );
-    }
-
-
-    // ==========================
-    // FILL
-    // ==========================
-
-    const targetRatio = w / h;
-    const sourceRatio = sw / sh;
-
-    let cropWidth;
-    let cropHeight;
-    let cropX;
-    let cropY;
-
-
-    if (sourceRatio > targetRatio) {
-
-        cropHeight = sh;
-        cropWidth = sh * targetRatio;
-
-        cropX = (sw - cropWidth) / 2;
-        cropY = 0;
-
+    if (source > target) {
+      sh = sw / target;
+      sx = (src.naturalWidth - sh * target) / 2;
+      sw = sh * target;
     } else {
+      sw = sh * target;
+      sw = Math.min(sw, src.naturalWidth);
 
-        cropWidth = sw;
-        cropHeight = sw / targetRatio;
-
-        cropX = 0;
-        cropY = (sh - cropHeight) / 2;
+      sh = sw / target;
+      sy = (src.naturalHeight - sh) / 2;
     }
 
-
     ctx.drawImage(
-        source,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
+      src,
+      sx,
+      sy,
+      sw,
+      sh,
+      0,
+      0,
+      w,
+      h
+    );
+  }
+
+  if (z !== 1) {
+    const cw = w / z;
+    const ch = h / z;
+
+    const tx = Math.max(
+      0,
+      Math.min(+x, w - cw)
+    );
+
+    const ty = Math.max(
+      0,
+      Math.min(+y, h - ch)
+    );
+
+    const temp = document.createElement("canvas");
+
+    temp.width = w;
+    temp.height = h;
+
+    temp
+      .getContext("2d")
+      .drawImage(
+        c,
+        tx,
+        ty,
+        cw,
+        ch,
         0,
         0,
         w,
         h
-    );
+      );
 
+    return temp;
+  }
 
-    return applyZoom(
-        canvas,
-        w,
-        h,
-        zoomAmount,
-        offsetX,
-        offsetY
-    );
+  return c;
 }
 
+function getOutputSettings() {
+  const format = outputFormat.value;
 
-// ==============================
-// APPLY ZOOM
-// ==============================
+  if (format === "jpeg") {
+    return {
+      mime: "image/jpeg",
+      extension: ".jpg",
+      quality: 0.92
+    };
+  }
 
-function applyZoom(
-    canvas,
-    w,
-    h,
-    zoomAmount,
-    offsetX,
-    offsetY
-) {
+  if (format === "webp") {
+    return {
+      mime: "image/webp",
+      extension: ".webp",
+      quality: 0.92
+    };
+  }
 
-    if (zoomAmount <= 1) {
-        return canvas;
-    }
-
-
-    const cropW = w / zoomAmount;
-    const cropH = h / zoomAmount;
-
-
-    const x = Math.max(
-        0,
-        Math.min(
-            Number(offsetX),
-            w - cropW
-        )
-    );
-
-
-    const y = Math.max(
-        0,
-        Math.min(
-            Number(offsetY),
-            h - cropH
-        )
-    );
-
-
-    const result =
-        document.createElement("canvas");
-
-    result.width = w;
-    result.height = h;
-
-
-    const ctx = result.getContext("2d");
-
-    ctx.drawImage(
-        canvas,
-        x,
-        y,
-        cropW,
-        cropH,
-        0,
-        0,
-        w,
-        h
-    );
-
-
-    return result;
+  return {
+    mime: "image/png",
+    extension: ".png",
+    quality: undefined
+  };
 }
 
+function canvasToBlob(canvas, settings) {
+  return new Promise(resolve => {
+    canvas.toBlob(
+      resolve,
+      settings.mime,
+      settings.quality
+    );
+  });
+}
 
-// ==============================
-// PREVIEW
-// ==============================
+function getOutputName(originalName, extension) {
+  return originalName.replace(/\.[^.]+$/, "") + extension;
+}
 
 function updatePreview() {
+  const img = state.images[state.selected];
 
-    const image =
-        state.images[state.selected];
+  if (!img) return;
 
-    if (!image) return;
+  const c = transform(
+    img,
+    +width.value,
+    +height.value,
+    mode.value,
+    +zoom.value,
+    +ox.value,
+    +oy.value
+  );
 
+  const canvas = $("previewCanvas");
 
-    const canvas = transform(
-        image,
-        Number(width.value),
-        Number(height.value),
-        mode.value,
-        Number(zoom.value),
-        Number(ox.value),
-        Number(oy.value)
+  const max = 600;
+
+  const s = Math.min(
+    max / c.width,
+    max / c.height,
+    1
+  );
+
+  canvas.width = c.width;
+  canvas.height = c.height;
+
+  canvas.style.width = c.width * s + "px";
+  canvas.style.height = c.height * s + "px";
+
+  canvas
+    .getContext("2d")
+    .drawImage(c, 0, 0);
+
+  canvas.hidden = false;
+
+  $("emptyPreview").style.display = "none";
+}
+
+$("processBtn").onclick = async () => {
+  if (!state.files.length) {
+    alert("Add at least one image.");
+    return;
+  }
+
+  state.processed = [];
+
+  $("progressBar").style.width = "0%";
+  $("progressText").textContent = "Processing...";
+
+  const settings = getOutputSettings();
+
+  for (let i = 0; i < state.files.length; i++) {
+
+    if (!state.images[i]) {
+      await new Promise(resolve => {
+        const im = new Image();
+
+        im.onload = () => {
+          state.images[i] = im;
+          resolve();
+        };
+
+        im.src = URL.createObjectURL(
+          state.files[i]
+        );
+      });
+    }
+
+    const c = transform(
+      state.images[i],
+      +width.value,
+      +height.value,
+      mode.value,
+      +zoom.value,
+      +ox.value,
+      +oy.value
     );
 
-
-    const preview =
-        $("previewCanvas");
-
-    const maxSize = 600;
-
-    const scale = Math.min(
-        maxSize / canvas.width,
-        maxSize / canvas.height,
-        1
+    const blob = await canvasToBlob(
+      c,
+      settings
     );
 
+    state.processed.push({
+      name: getOutputName(
+        state.files[i].name,
+        settings.extension
+      ),
+      blob
+    });
 
-    preview.width = canvas.width;
-    preview.height = canvas.height;
+    const pct =
+      ((i + 1) / state.files.length) * 100;
 
-    preview.style.width =
-        canvas.width * scale + "px";
+    $("progressBar").style.width =
+      pct + "%";
 
-    preview.style.height =
-        canvas.height * scale + "px";
+    $("progressText").textContent =
+      `Processed ${i + 1} of ${state.files.length}`;
 
+    await new Promise(r => setTimeout(r, 0));
+  }
 
-    const ctx =
-        preview.getContext("2d");
+  $("downloadBtn").disabled = false;
 
-    ctx.clearRect(
-        0,
-        0,
-        preview.width,
+  $("progressText").textContent =
+    "All images processed!";
+};
 
+$("downloadBtn").onclick = async () => {
+  if (!state.processed.length) return;
+
+  if (typeof JSZip === "undefined") {
+    state.processed.forEach((x, i) =>
+      setTimeout(
+        () => downloadBlob(x.blob, x.name),
+        i * 150
+      )
+    );
+
+    return;
+  }
+
+  const zip = new JSZip();
+
+  state.processed.forEach(x => {
+    zip.file(x.name, x.blob);
+  });
+
+  const blob = await zip.generateAsync({
+    type: "blob"
+  });
+
+  downloadBlob(
+    blob,
+    "cropvert-images.zip"
+  );
+};
+
+function downloadBlob(blob, name) {
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+
+  a.click();
+
+  setTimeout(
+    () => URL.revokeObjectURL(a.href),
+    1000
+  );
+}
+
+$("clearBtn").onclick = () => {
+  state.files = [];
+  state.images = [];
+  state.processed = [];
+  state.selected = 0;
+
+  renderList();
+
+  $("previewCanvas").hidden = true;
+
+  $("emptyPreview").style.display = "block";
+
+  $("selectedName").textContent =
+    "No image selected";
+
+  $("downloadBtn").disabled = true;
+
+  $("progressBar").style.width = "0%";
+
+  $("progressText").textContent = "Ready";
+
+  fileInput.value = "";
+};
+
+updateRanges();
+
+// Load JSZip
+const s = document.createElement("script");
+
+s.src =
+  "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+
+document.head.appendChild(s);
+```
