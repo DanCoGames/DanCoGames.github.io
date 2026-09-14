@@ -1,91 +1,141 @@
+
 const $ = id => document.getElementById(id);
 
 const state = {
-  files: [],
-  selected: 0,
-  images: [],
-  processed: []
+    files: [],
+    selected: 0,
+    images: [],
+    processed: []
 };
 
 const fileInput = $("fileInput");
 const dropzone = $("dropzone");
 
+
+// ==============================
+// FILE INPUT
+// ==============================
+
 fileInput.addEventListener("change", e => {
-  addFiles([...e.target.files]);
+    addFiles([...e.target.files]);
 });
 
-["dragenter", "dragover"].forEach(x =>
-  dropzone.addEventListener(x, e => {
-    e.preventDefault();
-    dropzone.classList.add("drag");
-  })
-);
+["dragenter", "dragover"].forEach(type => {
+    dropzone.addEventListener(type, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add("drag");
+    });
+});
 
-["dragleave", "drop"].forEach(x =>
-  dropzone.addEventListener(x, e => {
-    e.preventDefault();
-    dropzone.classList.remove("drag");
-  })
-);
+["dragleave", "drop"].forEach(type => {
+    dropzone.addEventListener(type, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove("drag");
+    });
+});
 
 dropzone.addEventListener("drop", e => {
-  addFiles([...e.dataTransfer.files]);
+    addFiles([...e.dataTransfer.files]);
 });
 
+
+// ==============================
+// ADD FILES
+// ==============================
+
 function addFiles(files) {
-  files = files.filter(f => f.type.startsWith("image/"));
 
-  state.files.push(...files);
-  state.images.push(...files.map(() => null));
+    files = files.filter(file =>
+        file.type.startsWith("image/")
+    );
 
-  renderList();
+    if (!files.length) return;
 
-  if (state.files.length && !state.images[state.selected]) {
-    loadSelected();
-  }
+    state.files.push(...files);
+    state.images.push(...files.map(() => null));
+
+    renderList();
+
+    if (state.files.length === files.length) {
+        state.selected = 0;
+        loadSelected();
+    }
 }
+
+
+// ==============================
+// FILE LIST
+// ==============================
 
 function renderList() {
-  $("imageCount").textContent = state.files.length;
 
-  const list = $("fileList");
-  list.innerHTML = "";
+    $("imageCount").textContent = state.files.length;
 
-  state.files.forEach((f, i) => {
-    const el = document.createElement("div");
+    const list = $("fileList");
 
-    el.className =
-      "file-item" + (i === state.selected ? " active" : "");
+    list.innerHTML = "";
 
-    el.textContent = f.name;
+    state.files.forEach((file, index) => {
 
-    el.onclick = () => {
-      state.selected = i;
-      renderList();
-      loadSelected();
-    };
+        const item = document.createElement("div");
 
-    list.appendChild(el);
-  });
+        item.className =
+            "file-item" +
+            (index === state.selected ? " active" : "");
+
+        item.textContent = file.name;
+
+        item.title = file.name;
+
+        item.addEventListener("click", () => {
+
+            state.selected = index;
+
+            renderList();
+
+            loadSelected();
+        });
+
+        list.appendChild(item);
+    });
 }
+
+
+// ==============================
+// LOAD SELECTED IMAGE
+// ==============================
 
 function loadSelected() {
-  const file = state.files[state.selected];
 
-  if (!file) return;
+    const file = state.files[state.selected];
 
-  $("selectedName").textContent = file.name;
+    if (!file) return;
 
-  const img = new Image();
+    $("selectedName").textContent = file.name;
 
-  img.onload = () => {
-    state.images[state.selected] = img;
-    updateRanges();
-    updatePreview();
-  };
+    const img = new Image();
 
-  img.src = URL.createObjectURL(file);
+    img.onload = () => {
+
+        state.images[state.selected] = img;
+
+        updateRanges();
+        updatePreview();
+    };
+
+    img.onerror = () => {
+        alert("Could not load this image.");
+    };
+
+    img.src = URL.createObjectURL(file);
 }
+
+
+// ==============================
+// CONTROLS
+// ==============================
 
 const width = $("width");
 const height = $("height");
@@ -97,399 +147,405 @@ const ox = $("offsetX");
 const oy = $("offsetY");
 const outputFormat = $("outputFormat");
 
-ratio.addEventListener("change", () => {
-  if (ratio.value !== "custom" && lock.checked) {
-    height.value = Math.max(
-      1,
-      Math.round(+width.value / +ratio.value)
-    );
 
-    updateRanges();
-    updatePreview();
-  }
+// ==============================
+// ASPECT RATIO
+// ==============================
+
+ratio.addEventListener("change", () => {
+
+    if (
+        ratio.value !== "custom" &&
+        lock.checked
+    ) {
+
+        height.value = Math.max(
+            1,
+            Math.round(
+                Number(width.value) /
+                Number(ratio.value)
+            )
+        );
+
+        updateRanges();
+        updatePreview();
+    }
 });
+
 
 width.addEventListener("input", () => {
-  if (lock.checked && ratio.value !== "custom") {
-    height.value = Math.max(
-      1,
-      Math.round(+width.value / +ratio.value)
-    );
-  }
 
-  updateRanges();
-  updatePreview();
-});
+    if (
+        lock.checked &&
+        ratio.value !== "custom"
+    ) {
 
-height.addEventListener("input", () => {
-  if (lock.checked && ratio.value !== "custom") {
-    width.value = Math.max(
-      1,
-      Math.round(+height.value * +ratio.value)
-    );
-  }
+        height.value = Math.max(
+            1,
+            Math.round(
+                Number(width.value) /
+                Number(ratio.value)
+            )
+        );
+    }
 
-  updateRanges();
-  updatePreview();
-});
-
-[mode, zoom, ox, oy].forEach(x =>
-  x.addEventListener("input", () => {
     updateRanges();
     updatePreview();
-  })
-);
+});
+
+
+height.addEventListener("input", () => {
+
+    if (
+        lock.checked &&
+        ratio.value !== "custom"
+    ) {
+
+        width.value = Math.max(
+            1,
+            Math.round(
+                Number(height.value) *
+                Number(ratio.value)
+            )
+        );
+    }
+
+    updateRanges();
+    updatePreview();
+});
+
+
+[mode, zoom, ox, oy].forEach(element => {
+
+    element.addEventListener("input", () => {
+
+        updateRanges();
+        updatePreview();
+
+    });
+
+});
+
+
+// ==============================
+// UPDATE RANGES
+// ==============================
 
 function updateRanges() {
-  const w = Math.max(1, +width.value || 1);
-  const h = Math.max(1, +height.value || 1);
-  const z = Math.max(1, +zoom.value);
 
-  ox.max = Math.max(0, Math.floor(w - w / z));
-  oy.max = Math.max(0, Math.floor(h - h / z));
+    const w = Math.max(
+        1,
+        Number(width.value) || 1
+    );
 
-  ox.value = Math.min(+ox.value, +ox.max);
-  oy.value = Math.min(+oy.value, +oy.max);
+    const h = Math.max(
+        1,
+        Number(height.value) || 1
+    );
 
-  $("zoomOut").textContent =
-    Number(zoom.value).toFixed(1) + "×";
+    const z = Math.max(
+        1,
+        Number(zoom.value)
+    );
 
-  $("xOut").textContent = ox.value;
-  $("yOut").textContent = oy.value;
 
-  $("previewDimensions").textContent =
-    `${w} × ${h}`;
+    ox.max = Math.max(
+        0,
+        Math.floor(w - w / z)
+    );
+
+    oy.max = Math.max(
+        0,
+        Math.floor(h - h / z)
+    );
+
+
+    ox.value = Math.min(
+        Number(ox.value),
+        Number(ox.max)
+    );
+
+    oy.value = Math.min(
+        Number(oy.value),
+        Number(oy.max)
+    );
+
+
+    $("zoomOut").textContent =
+        Number(zoom.value).toFixed(1) + "×";
+
+    $("xOut").textContent = ox.value;
+
+    $("yOut").textContent = oy.value;
+
+
+    $("previewDimensions").textContent =
+        `${w} × ${h}`;
 }
 
-function transform(src, w, h, m, z, x, y) {
-  const c = document.createElement("canvas");
 
-  c.width = w;
-  c.height = h;
+// ==============================
+// TRANSFORM IMAGE
+// ==============================
 
-  const ctx = c.getContext("2d");
+function transform(
+    source,
+    w,
+    h,
+    resizeMode,
+    zoomAmount,
+    offsetX,
+    offsetY
+) {
 
-  let sx = 0;
-  let sy = 0;
-  let sw = src.naturalWidth;
-  let sh = src.naturalHeight;
+    const canvas =
+        document.createElement("canvas");
 
-  if (m === "stretch") {
-    ctx.drawImage(src, 0, 0, w, h);
-    return c;
-  }
+    canvas.width = w;
+    canvas.height = h;
 
-  if (m === "fit") {
-    const s = Math.min(w / sw, h / sh);
+    const ctx = canvas.getContext("2d");
 
-    const dw = sw * s;
-    const dh = sh * s;
 
-    // White background for JPG/WebP/PNG compatibility
+    // Important for JPG
+    // JPG cannot contain transparency.
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, w, h);
 
-    ctx.drawImage(
-      src,
-      (w - dw) / 2,
-      (h - dh) / 2,
-      dw,
-      dh
-    );
-  } else {
-    const target = w / h;
-    const source = sw / sh;
 
-    if (source > target) {
-      sh = sw / target;
-      sx = (src.naturalWidth - sh * target) / 2;
-      sw = sh * target;
-    } else {
-      sw = sh * target;
-      sw = Math.min(sw, src.naturalWidth);
+    const sw = source.naturalWidth;
+    const sh = source.naturalHeight;
 
-      sh = sw / target;
-      sy = (src.naturalHeight - sh) / 2;
+
+    // ==========================
+    // STRETCH
+    // ==========================
+
+    if (resizeMode === "stretch") {
+
+        ctx.drawImage(
+            source,
+            0,
+            0,
+            w,
+            h
+        );
+
+        return applyZoom(
+            canvas,
+            w,
+            h,
+            zoomAmount,
+            offsetX,
+            offsetY
+        );
     }
 
+
+    // ==========================
+    // FIT
+    // ==========================
+
+    if (resizeMode === "fit") {
+
+        const scale = Math.min(
+            w / sw,
+            h / sh
+        );
+
+        const dw = sw * scale;
+        const dh = sh * scale;
+
+        ctx.drawImage(
+            source,
+            (w - dw) / 2,
+            (h - dh) / 2,
+            dw,
+            dh
+        );
+
+        return applyZoom(
+            canvas,
+            w,
+            h,
+            zoomAmount,
+            offsetX,
+            offsetY
+        );
+    }
+
+
+    // ==========================
+    // FILL
+    // ==========================
+
+    const targetRatio = w / h;
+    const sourceRatio = sw / sh;
+
+    let cropWidth;
+    let cropHeight;
+    let cropX;
+    let cropY;
+
+
+    if (sourceRatio > targetRatio) {
+
+        cropHeight = sh;
+        cropWidth = sh * targetRatio;
+
+        cropX = (sw - cropWidth) / 2;
+        cropY = 0;
+
+    } else {
+
+        cropWidth = sw;
+        cropHeight = sw / targetRatio;
+
+        cropX = 0;
+        cropY = (sh - cropHeight) / 2;
+    }
+
+
     ctx.drawImage(
-      src,
-      sx,
-      sy,
-      sw,
-      sh,
-      0,
-      0,
-      w,
-      h
-    );
-  }
-
-  if (z !== 1) {
-    const cw = w / z;
-    const ch = h / z;
-
-    const tx = Math.max(
-      0,
-      Math.min(+x, w - cw)
-    );
-
-    const ty = Math.max(
-      0,
-      Math.min(+y, h - ch)
-    );
-
-    const temp = document.createElement("canvas");
-
-    temp.width = w;
-    temp.height = h;
-
-    temp
-      .getContext("2d")
-      .drawImage(
-        c,
-        tx,
-        ty,
-        cw,
-        ch,
+        source,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
         0,
         0,
         w,
         h
-      );
-
-    return temp;
-  }
-
-  return c;
-}
-
-function getOutputSettings() {
-  const format = outputFormat.value;
-
-  if (format === "jpeg") {
-    return {
-      mime: "image/jpeg",
-      extension: ".jpg",
-      quality: 0.92
-    };
-  }
-
-  if (format === "webp") {
-    return {
-      mime: "image/webp",
-      extension: ".webp",
-      quality: 0.92
-    };
-  }
-
-  return {
-    mime: "image/png",
-    extension: ".png",
-    quality: undefined
-  };
-}
-
-function canvasToBlob(canvas, settings) {
-  return new Promise(resolve => {
-    canvas.toBlob(
-      resolve,
-      settings.mime,
-      settings.quality
     );
-  });
+
+
+    return applyZoom(
+        canvas,
+        w,
+        h,
+        zoomAmount,
+        offsetX,
+        offsetY
+    );
 }
 
-function getOutputName(originalName, extension) {
-  return originalName.replace(/\.[^.]+$/, "") + extension;
-}
 
-function updatePreview() {
-  const img = state.images[state.selected];
+// ==============================
+// APPLY ZOOM
+// ==============================
 
-  if (!img) return;
+function applyZoom(
+    canvas,
+    w,
+    h,
+    zoomAmount,
+    offsetX,
+    offsetY
+) {
 
-  const c = transform(
-    img,
-    +width.value,
-    +height.value,
-    mode.value,
-    +zoom.value,
-    +ox.value,
-    +oy.value
-  );
-
-  const canvas = $("previewCanvas");
-
-  const max = 600;
-
-  const s = Math.min(
-    max / c.width,
-    max / c.height,
-    1
-  );
-
-  canvas.width = c.width;
-  canvas.height = c.height;
-
-  canvas.style.width = c.width * s + "px";
-  canvas.style.height = c.height * s + "px";
-
-  canvas
-    .getContext("2d")
-    .drawImage(c, 0, 0);
-
-  canvas.hidden = false;
-
-  $("emptyPreview").style.display = "none";
-}
-
-$("processBtn").onclick = async () => {
-  if (!state.files.length) {
-    alert("Add at least one image.");
-    return;
-  }
-
-  state.processed = [];
-
-  $("progressBar").style.width = "0%";
-  $("progressText").textContent = "Processing...";
-
-  const settings = getOutputSettings();
-
-  for (let i = 0; i < state.files.length; i++) {
-
-    if (!state.images[i]) {
-      await new Promise(resolve => {
-        const im = new Image();
-
-        im.onload = () => {
-          state.images[i] = im;
-          resolve();
-        };
-
-        im.src = URL.createObjectURL(
-          state.files[i]
-        );
-      });
+    if (zoomAmount <= 1) {
+        return canvas;
     }
 
-    const c = transform(
-      state.images[i],
-      +width.value,
-      +height.value,
-      mode.value,
-      +zoom.value,
-      +ox.value,
-      +oy.value
+
+    const cropW = w / zoomAmount;
+    const cropH = h / zoomAmount;
+
+
+    const x = Math.max(
+        0,
+        Math.min(
+            Number(offsetX),
+            w - cropW
+        )
     );
 
-    const blob = await canvasToBlob(
-      c,
-      settings
+
+    const y = Math.max(
+        0,
+        Math.min(
+            Number(offsetY),
+            h - cropH
+        )
     );
 
-    state.processed.push({
-      name: getOutputName(
-        state.files[i].name,
-        settings.extension
-      ),
-      blob
-    });
 
-    const pct =
-      ((i + 1) / state.files.length) * 100;
+    const result =
+        document.createElement("canvas");
 
-    $("progressBar").style.width =
-      pct + "%";
+    result.width = w;
+    result.height = h;
 
-    $("progressText").textContent =
-      `Processed ${i + 1} of ${state.files.length}`;
 
-    await new Promise(r => setTimeout(r, 0));
-  }
+    const ctx = result.getContext("2d");
 
-  $("downloadBtn").disabled = false;
-
-  $("progressText").textContent =
-    "All images processed!";
-};
-
-$("downloadBtn").onclick = async () => {
-  if (!state.processed.length) return;
-
-  if (typeof JSZip === "undefined") {
-    state.processed.forEach((x, i) =>
-      setTimeout(
-        () => downloadBlob(x.blob, x.name),
-        i * 150
-      )
+    ctx.drawImage(
+        canvas,
+        x,
+        y,
+        cropW,
+        cropH,
+        0,
+        0,
+        w,
+        h
     );
 
-    return;
-  }
 
-  const zip = new JSZip();
-
-  state.processed.forEach(x => {
-    zip.file(x.name, x.blob);
-  });
-
-  const blob = await zip.generateAsync({
-    type: "blob"
-  });
-
-  downloadBlob(
-    blob,
-    "cropvert-images.zip"
-  );
-};
-
-function downloadBlob(blob, name) {
-  const a = document.createElement("a");
-
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-
-  a.click();
-
-  setTimeout(
-    () => URL.revokeObjectURL(a.href),
-    1000
-  );
+    return result;
 }
 
-$("clearBtn").onclick = () => {
-  state.files = [];
-  state.images = [];
-  state.processed = [];
-  state.selected = 0;
 
-  renderList();
+// ==============================
+// PREVIEW
+// ==============================
 
-  $("previewCanvas").hidden = true;
+function updatePreview() {
 
-  $("emptyPreview").style.display = "block";
+    const image =
+        state.images[state.selected];
 
-  $("selectedName").textContent =
-    "No image selected";
+    if (!image) return;
 
-  $("downloadBtn").disabled = true;
 
-  $("progressBar").style.width = "0%";
+    const canvas = transform(
+        image,
+        Number(width.value),
+        Number(height.value),
+        mode.value,
+        Number(zoom.value),
+        Number(ox.value),
+        Number(oy.value)
+    );
 
-  $("progressText").textContent = "Ready";
 
-  fileInput.value = "";
-};
+    const preview =
+        $("previewCanvas");
 
-updateRanges();
+    const maxSize = 600;
 
-// Load JSZip
-const s = document.createElement("script");
+    const scale = Math.min(
+        maxSize / canvas.width,
+        maxSize / canvas.height,
+        1
+    );
 
-s.src =
-  "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
 
-document.head.appendChild(s);
-```
+    preview.width = canvas.width;
+    preview.height = canvas.height;
+
+    preview.style.width =
+        canvas.width * scale + "px";
+
+    preview.style.height =
+        canvas.height * scale + "px";
+
+
+    const ctx =
+        preview.getContext("2d");
+
+    ctx.clearRect(
+        0,
+        0,
+        preview.width,
+
