@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span class="brand-mark">D</span><div><strong>DanCo Tools</strong><small>Batch Screenshot Cleaner</small></div></div>
+  <div class="brand"><span class="brand-mark">D</span><div><strong>DanCo Tools</strong><small>CropVert</small></div></div>
   <div class="top-actions"><button id="clearBtn" class="ghost">Clear All</button></div>
 </header>
 
