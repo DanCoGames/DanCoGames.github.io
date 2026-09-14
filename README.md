@@ -1,9 +1,7 @@
-# Batch Screenshot Cleaner — Web Edition
+# CropVert — Web Edition
 
-A browser-based conversion of the uploaded Tkinter Batch Screenshot Cleaner.
+A browser-based Multiple images cropper.
 
-## Run
-Open `index.html` in a modern browser. For best results, serve the folder with any local static web server.
 
 ## Features
 - PNG/JPG/JPEG/BMP/WebP multi-file selection
@@ -19,5 +17,4 @@ Open `index.html` in a modern browser. For best results, serve the folder with a
 - ZIP download (JSZip loaded from jsDelivr)
 - Fully client-side image processing
 
-## Note
-The original Python app saves into a user-selected output folder. Browsers cannot silently write into arbitrary folders, so this version downloads processed files instead. The ZIP button packages all processed images together.
+
