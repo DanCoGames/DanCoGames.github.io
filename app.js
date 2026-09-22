@@ -84,7 +84,24 @@ function renderList() {
             "file-item" +
             (index === state.selected ? " active" : "");
 
-        item.textContent = file.name;
+        const name = document.createElement("span");
+        name.className = "file-name";
+        name.textContent = file.name;
+
+        const removeButton = document.createElement("button");
+        removeButton.className = "file-remove";
+        removeButton.type = "button";
+        removeButton.title = "Remove image";
+        removeButton.setAttribute("aria-label", "Remove " + file.name);
+        removeButton.textContent = "×";
+
+        removeButton.addEventListener("click", function (event) {
+            event.stopPropagation();
+            removeImage(index);
+        });
+
+        item.appendChild(name);
+        item.appendChild(removeButton);
 
         item.addEventListener("click", function () {
 
@@ -97,6 +114,51 @@ function renderList() {
 
         list.appendChild(item);
     });
+}
+
+
+// ========================================
+// REMOVE IMAGE
+// ========================================
+
+function removeImage(index) {
+
+    if (index < 0 || index >= state.files.length) {
+        return;
+    }
+
+    state.files.splice(index, 1);
+    state.images.splice(index, 1);
+
+    // Processed output belongs to the previous image set.
+    state.processed = [];
+
+    $("downloadBtn").disabled = true;
+    $("progressBar").style.width = "0%";
+    $("progressText").textContent = "Ready";
+
+    if (state.files.length === 0) {
+
+        state.selected = 0;
+
+        renderList();
+
+        $("previewCanvas").hidden = true;
+        $("emptyPreview").style.display = "block";
+        $("selectedName").textContent = "No image selected";
+
+        return;
+    }
+
+    // Keep the selection on a valid image.
+    if (index < state.selected) {
+        state.selected--;
+    } else if (index === state.selected) {
+        state.selected = Math.min(state.selected, state.files.length - 1);
+    }
+
+    renderList();
+    loadSelected();
 }
 
 
