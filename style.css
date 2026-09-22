@@ -297,3 +297,52 @@
     min-height:300px;
   }
 }
+
+
+/* Image list remove button */
+.file-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+}
+
+.file-name{
+  min-width:0;
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.file-remove{
+  flex:0 0 24px;
+  width:24px;
+  height:24px;
+  padding:0;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:#8b95a7;
+  font-size:18px;
+  line-height:1;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:background .15s ease,color .15s ease;
+}
+
+.file-remove:hover{
+  background:#3a2028;
+  color:#ff7b8b;
+}
+
+.file-item.active .file-remove{
+  color:#c7cfdd;
+}
+
+.file-item.active .file-remove:hover{
+  background:#4a2630;
+  color:#ff9aa7;
+}
