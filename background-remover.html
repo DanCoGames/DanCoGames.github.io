@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Background Remover — DanCo Tools</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* A checkered background helps visualize the transparent result */
+    .transparent-bg {
+        background-image: 
+            linear-gradient(45deg, #ccc 25%, transparent 25%), 
+            linear-gradient(135deg, #ccc 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #ccc 75%),
+            linear-gradient(135deg, transparent 75%, #ccc 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 0, 10px -10px, 0px 10px;
+        background-color: #fff;
+    }
+    #previewImage { max-width: 100%; max-height: 400px; display: none; margin: 0 auto; }
+  </style>
 </head>
 
 <body>
@@ -31,8 +45,7 @@
   <section class="background-hero panel">
     <div class="background-icon">✦</div>
     <h1>Background Remover</h1>
-    <p>Remove image backgrounds quickly and cleanly.</p>
-    <span class="coming-soon">GUI PREVIEW</span>
+    <p>Remove image backgrounds quickly and cleanly right in your browser.</p>
   </section>
 
   <section class="background-workspace">
@@ -40,55 +53,61 @@
     <div class="background-upload panel">
       <div class="section-heading">
         <h2>Image</h2>
-        <span>0 images</span>
+        <span id="imageStatus">0 images</span>
       </div>
 
-      <div class="background-dropzone">
+      <label class="background-dropzone dropzone" id="bgDropzone">
+        <input type="file" id="bgFileInput" accept="image/png,image/jpeg,image/webp" style="display: none;">
         <div class="upload-icon">＋</div>
         <b>Drop an image here</b>
         <small>or click to browse</small>
-      </div>
+      </label>
     </div>
 
     <div class="background-preview panel">
       <div class="section-heading">
         <h2>Preview</h2>
-        <span>Transparent</span>
+        <span id="previewStatus">Waiting...</span>
       </div>
 
-      <div class="background-preview-area">
-        <div class="empty-preview">
+      <div class="background-preview-area" id="bgPreviewArea">
+        <div class="empty-preview" id="bgEmptyPreview">
           <div>🖼️</div>
           <p>Your processed image will appear here</p>
         </div>
+        <img id="previewImage" alt="Image Preview">
       </div>
     </div>
 
     <aside class="background-controls panel">
-      <h2>Background</h2>
+      <h2>Controls</h2>
 
-      <div class="fake-control">
+      <div class="fake-control" style="opacity: 0.5; pointer-events: none;">
         <span>Removal Mode</span>
-        <div>Automatic <span>⌄</span></div>
+        <div>AI Auto <span>⌄</span></div>
       </div>
 
-      <div class="fake-control">
-        <span>Edge Refinement</span>
-        <div class="fake-slider"><i></i></div>
+      <div class="fake-control" style="opacity: 0.5; pointer-events: none;">
+        <span>Output Format</span>
+        <div>PNG (Transparent) <span>⌄</span></div>
       </div>
+      
+      <p id="loadingText" style="display: none; color: #0066cc; font-size: 0.9em; margin-bottom: 10px;">
+        ⏳ AI is processing... (May take a few seconds on first run)
+      </p>
 
-      <div class="fake-control">
-        <span>Output</span>
-        <div>PNG <span>⌄</span></div>
-      </div>
-
-      <button class="primary" type="button">Remove Background</button>
-      <button class="secondary" type="button" disabled>Download Image</button>
+      <button id="processBtn" class="primary" type="button" disabled>Remove Background</button>
+      <button id="downloadBtn" class="secondary" type="button" disabled>Download Image</button>
     </aside>
 
   </section>
 
 </main>
+
+<!-- Load the Background Removal AI Library -->
+<script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.3/dist/browser/bundle.min.js"></script>
+<!-- Load our custom logic -->
+<script src="bg-remover.js"></script>
 
 </body>
 </html>
