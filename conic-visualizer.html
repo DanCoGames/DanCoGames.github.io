@@ -13,6 +13,8 @@
             color: white; 
             user-select: none;
         }
+        
+        /* Bottom Slider UI */
         #ui-container {
             position: absolute; 
             bottom: 30px; 
@@ -23,13 +25,16 @@
             border-radius: 12px;
             text-align: center; 
             border: 1px solid rgba(255, 255, 255, 0.1); 
-            width: 320px;
+            width: 340px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.7);
             backdrop-filter: blur(10px);
         }
-        h3 { margin: 0 0 10px; font-size: 14px; color: #8892b0; font-weight: 600; letter-spacing: 1px;}
-        #conic-name { font-size: 32px; font-weight: bold; margin: 10px 0 0 0; color: #ff3366; text-transform: uppercase; letter-spacing: 2px;}
-        input[type=range] { width: 100%; cursor: pointer; accent-color: #ff3366; }
+        h3 { margin: 0 0 10px; font-size: 13px; color: #8892b0; font-weight: 600; letter-spacing: 1px;}
+        #conic-name { font-size: 28px; font-weight: bold; margin: 8px 0 0 0; color: #ff3366; text-transform: uppercase; letter-spacing: 2px;}
+        #eccentricity-display { font-size: 14px; color: #a0aec0; margin-top: 6px; font-weight: 500; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #ff3366; margin-top: 10px; }
+        
+        /* Instructions Overlay */
         #instructions { 
             position: absolute; 
             top: 20px; 
@@ -42,63 +47,91 @@
             pointer-events: none; 
             border: 1px solid rgba(255,255,255,0.05);
         }
+
+        /* 2D Mathematical Graph Overlay */
+        #graph-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 15, 20, 0.85);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            text-align: center;
+        }
+        #graph-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8892b0;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        canvas#graph2d {
+            background: #0a0a10;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
     </style>
 </head>
 <body>
     
     <div id="instructions">
-        🖱️ <b>Left Click + Drag</b> to Rotate Scene<br>
+        🖱️ <b>Left Click + Drag</b> to Rotate 3D Scene<br>
         📜 <b>Scroll Wheel</b> to Zoom
+    </div>
+
+    <!-- 2D Graph Overlay -->
+    <div id="graph-container">
+        <div id="graph-title">2D CARTESIAN GRAPH</div>
+        <canvas id="graph2d" width="220" height="220"></canvas>
     </div>
 
     <div id="ui-container">
         <h3>SLICING PLANE ANGLE</h3>
         <input type="range" id="angleSlider" min="0" max="90" value="0" step="1">
         <div id="conic-name">Circle</div>
+        <div id="eccentricity-display">e = 0 (Circle)</div>
     </div>
 
-    <!-- Core Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- OrbitControls (Makes it truly interactive 3D) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // 1. Scene Setup
+        /* =========================================
+           1. THREE.JS 3D ENVIRONMENT SETUP
+        ========================================= */
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0a0a10, 0.015);
+        scene.fog = new THREE.FogExp2(0x0a0a10, 0.012);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(25, 15, 35); // Start at a nice angled view
+        camera.position.set(30, 15, 35); 
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio); // Crisp on high-res displays
+        renderer.setPixelRatio(window.devicePixelRatio); 
         document.body.appendChild(renderer.domElement);
 
-        // 2. Camera Controls (This is what makes it feel 3D!)
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true; 
         controls.dampingFactor = 0.05;
-        controls.maxDistance = 100;
-        controls.minDistance = 10;
 
-        // 3. Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
         dirLight.position.set(20, 40, 20);
         scene.add(dirLight);
-        
-        const blueLight = new THREE.PointLight(0x0088ff, 2, 50);
-        blueLight.position.set(-20, 10, -20);
-        scene.add(blueLight);
 
-        // 4. Environment Grid
+        // Floor Grid
         const gridHelper = new THREE.GridHelper(100, 50, 0x333344, 0x1a1a24);
         gridHelper.position.y = -12;
         scene.add(gridHelper);
 
-        // 5. Geometry: The Double Cone (Using high-quality physical material)
-        const coneGeo = new THREE.ConeGeometry(6, 12, 64, 1, true); // true = open ended
+        /* =========================================
+           2. CONE GEOMETRY & MATERIALS
+        ========================================= */
+        const coneGeo = new THREE.ConeGeometry(6, 12, 64, 1, true); 
         const coneMat = new THREE.MeshPhysicalMaterial({
             color: 0x00aaff,
             transparent: true,
@@ -106,8 +139,7 @@
             side: THREE.DoubleSide,
             roughness: 0.1,
             metalness: 0.2,
-            clearcoat: 1.0,
-            depthWrite: false // Prevents visual glitching when overlapping transparent objects
+            depthWrite: false 
         });
 
         const topCone = new THREE.Mesh(coneGeo, coneMat);
@@ -122,30 +154,26 @@
         coneGroup.add(bottomCone);
         scene.add(coneGroup);
 
-        // Add structural wireframes to cones to make the 3D shape distinct
         const edgesGeo = new THREE.EdgesGeometry(coneGeo, 15);
         const edgesMat = new THREE.LineBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.3 });
         topCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
         bottomCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
 
-        // 6. Geometry: The Slicing Plane
+        /* =========================================
+           3. SLICING PLANE GEOMETRY
+        ========================================= */
         const planeGroup = new THREE.Group();
-        
-        const planeGeo = new THREE.PlaneGeometry(26, 26);
+        const planeGeo = new THREE.PlaneGeometry(28, 28);
         const planeMat = new THREE.MeshPhysicalMaterial({
             color: 0xff3366,
             transparent: true,
             opacity: 0.5,
             side: THREE.DoubleSide,
-            roughness: 0.3,
-            metalness: 0.5,
-            clearcoat: 0.5,
             depthWrite: false
         });
         const planeMesh = new THREE.Mesh(planeGeo, planeMat);
-        planeMesh.rotation.x = Math.PI / 2; // Lay flat initially
+        planeMesh.rotation.x = Math.PI / 2; 
         
-        // Add a glowing border to the cutting plane
         const planeEdges = new THREE.EdgesGeometry(planeGeo);
         const planeEdgesMat = new THREE.LineBasicMaterial({ color: 0xffaacc, linewidth: 2 });
         planeMesh.add(new THREE.LineSegments(planeEdges, planeEdgesMat));
@@ -153,49 +181,161 @@
         planeGroup.add(planeMesh);
         scene.add(planeGroup);
 
-        // 7. UI Slider Logic
+        /* =========================================
+           4. 2D CANVAS GRAPH DRAWING LOGIC
+        ========================================= */
+        const canvas2d = document.getElementById('graph2d');
+        const ctx = canvas2d.getContext('2d');
+
+        function drawGraph(type, color) {
+            ctx.clearRect(0, 0, canvas2d.width, canvas2d.height);
+            const cx = canvas2d.width / 2;
+            const cy = canvas2d.height / 2;
+
+            // Draw Grid
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<220; i+=20) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 220); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(220, i); ctx.stroke();
+            }
+
+            // Draw Axes
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, 220); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(220, cy); ctx.stroke();
+
+            // Draw the mathematical curve
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            let formulaText = "";
+
+            if (type === 'Circle') {
+                ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+                ctx.stroke();
+                formulaText = "x² + y² = r²";
+            } 
+            else if (type === 'Ellipse') {
+                ctx.ellipse(cx, cy, 70, 35, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                formulaText = "x²/a² + y²/b² = 1";
+            } 
+            else if (type === 'Parabola') {
+                for (let x = -100; x <= 100; x++) {
+                    let y = (x * x) / -60; 
+                    if (x === -100) ctx.moveTo(cx + x, cy - y + 50);
+                    else ctx.lineTo(cx + x, cy - y + 50);
+                }
+                ctx.stroke();
+                formulaText = "y² = 4ax";
+            } 
+            else if (type === 'Hyperbola') {
+                // Left branch
+                for(let y = -100; y <= 100; y++) {
+                    let x = -Math.sqrt(1 + (y*y)/1000) * 25;
+                    if(y===-100) ctx.moveTo(cx + x, cy + y);
+                    else ctx.lineTo(cx + x, cy + y);
+                }
+                ctx.stroke();
+                // Right branch
+                ctx.beginPath();
+                for(let y = -100; y <= 100; y++) {
+                    let x = Math.sqrt(1 + (y*y)/1000) * 25;
+                    if(y===-100) ctx.moveTo(cx + x, cy + y);
+                    else ctx.lineTo(cx + x, cy + y);
+                }
+                ctx.stroke();
+                formulaText = "x²/a² - y²/b² = 1";
+            }
+
+            // Draw Formula Text
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 15px "Segoe UI"';
+            ctx.textAlign = 'center';
+            ctx.fillText(formulaText, cx, cy + 90);
+        }
+
+        /* =========================================
+           5. UI SLIDER & MATHEMATICS LOGIC
+        ========================================= */
         const slider = document.getElementById('angleSlider');
         const nameLabel = document.getElementById('conic-name');
+        const eccentricityLabel = document.getElementById('eccentricity-display');
 
-        slider.addEventListener('input', (e) => {
-            const angleDeg = parseFloat(e.target.value);
+        // Cone half-angle alpha = atan(Radius / Height) = atan(6 / 12)
+        const alpha = Math.atan(6 / 12); 
+        const cosAlpha = Math.cos(alpha);
+
+        function updateSimulation() {
+            const angleDeg = parseFloat(slider.value);
             
-            // Rotate the plane container
+            // 1. Rotate the plane
             planeGroup.rotation.x = angleDeg * (Math.PI / 180);
             
-            // Mathematical checks to name the conic
-            // Base = 6, Height = 12. Angle of cone generator = atan(12/6) = 63.43°
             let text = "";
             let color = "";
+            let eccentricityText = "";
 
+            // Calculate dynamic eccentricity
+            const angleRad = angleDeg * (Math.PI / 180);
+            let eCalc = Math.sin(angleRad) / cosAlpha;
+
+            // 2. MATHEMATICAL FIX & CLASSIFICATION
             if (angleDeg === 0) {
                 text = "Circle";
                 color = "#ff3366";
-            } else if (angleDeg < 63) {
+                eccentricityText = "e = 0  (Circle)";
+                planeGroup.position.set(0, 5, 0); 
+            } 
+            else if (angleDeg < 63.43) {
                 text = "Ellipse";
                 color = "#bb33ff";
-            } else if (angleDeg >= 63 && angleDeg <= 64) {
+                eccentricityText = `e = ${eCalc.toFixed(2)}  (0 < e < 1)`;
+                planeGroup.position.set(0, 5, 0); 
+            } 
+            else if (angleDeg >= 63.43 && angleDeg <= 64.5) {
                 text = "Parabola";
-                color = "#ffaa00"; // Highlight Parabola in gold because it's a specific exact angle
-            } else {
+                color = "#ffaa00"; 
+                eccentricityText = "e = 1  (Parabola)";
+                planeGroup.position.set(0, 5, 0); 
+            } 
+            else {
                 text = "Hyperbola";
                 color = "#00ffaa";
+                eccentricityText = `e = ${eCalc.toFixed(2)}  (e > 1)`;
+                
+                // Translate plane to avoid apex intersection (degenerate conic)
+                let t = (angleDeg - 64.5) / (90 - 64.5); 
+                planeGroup.position.set(0, 5 * (1 - t), 2.5 * t); 
             }
             
+            // 3. Update Visuals
             nameLabel.innerText = text;
             nameLabel.style.color = color;
-            planeMat.color.set(color); // The slicing plane changes color to match the text!
-        });
+            eccentricityLabel.innerText = eccentricityText;
+            planeMat.color.set(color); 
+            planeEdgesMat.color.set(color);
 
-        // 8. Animation Loop
+            // 4. Update the 2D Cartesian Graph
+            drawGraph(text, color);
+        }
+
+        // Initialize state
+        slider.addEventListener('input', updateSimulation);
+        updateSimulation(); // Call once to set initial Circle state
+
+        /* =========================================
+           6. RENDER LOOP
+        ========================================= */
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); // Smooth damping for the camera
+            controls.update(); 
             renderer.render(scene, camera);
         }
         animate();
 
-        // 9. Handle Window Resizing gracefully
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
