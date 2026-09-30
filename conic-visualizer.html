@@ -3,472 +3,2142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>3D Conic Sections Explorer — DanCo Tools</title>
+
     <style>
-        * { box-sizing: border-box; }
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background: #0d0d12; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            color: #e2e8f0; 
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #0d0d12;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e2e8f0;
             user-select: none;
         }
 
-        /* Top Header */
+        /* =========================================================
+           HEADER
+        ========================================================= */
+
         #header {
             position: absolute;
             top: 20px;
             left: 25px;
             z-index: 10;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
+
             width: calc(100% - 50px);
+
             pointer-events: none;
         }
-        .title-area h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; color: #f8fafc; }
-        .title-area p { margin: 4px 0 0 0; font-size: 13px; color: #94a3b8; }
-        .badge {
-            background: #1e1e2d;
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
+
+        .title-area h1 {
+            margin: 0;
+            font-size: 22px;
             font-weight: 600;
-            color: #38bdf8;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            pointer-events: auto;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
         }
 
-        /* Top-Right Info Overlay & 2D Graph */
+        .title-area p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* =========================================================
+           GRAPH CONTAINER
+        ========================================================= */
+
         #graph-container {
             position: absolute;
+
             top: 20px;
             right: 25px;
+
             background: rgba(18, 18, 26, 0.85);
+
             border-radius: 12px;
+
             border: 1px solid rgba(255,255,255,0.08);
+
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
             backdrop-filter: blur(10px);
+
             padding: 15px;
+
             text-align: center;
+
             z-index: 10;
         }
+
         #graph-title {
             font-size: 12px;
             font-weight: 600;
+
             color: #94a3b8;
+
             margin-bottom: 8px;
+
             letter-spacing: 1px;
         }
+
         canvas#graph2d {
             background: #0a0a10;
+
             border-radius: 6px;
+
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Instructions Overlay */
-        #instructions { 
-            position: absolute; 
-            top: 20px; 
-            left: 320px; 
-            background: rgba(0,0,0,0.5); 
-            padding: 8px 14px; 
-            border-radius: 8px; 
-            color: #94a3b8; 
-            font-size: 12px; 
-            pointer-events: none; 
+        /* =========================================================
+           INSTRUCTIONS
+        ========================================================= */
+
+        #instructions {
+            position: absolute;
+
+            top: 20px;
+            left: 320px;
+
+            background: rgba(0,0,0,0.5);
+
+            padding: 8px 14px;
+
+            border-radius: 8px;
+
+            color: #94a3b8;
+
+            font-size: 12px;
+
+            pointer-events: none;
+
             border: 1px solid rgba(255,255,255,0.05);
+
             z-index: 10;
         }
 
-        /* Bottom Controls Panel */
+        /* =========================================================
+           BOTTOM CONTROLS
+        ========================================================= */
+
         #controls-panel {
             position: absolute;
+
             bottom: 25px;
             left: 25px;
+
             width: calc(100% - 50px);
+
             max-width: 900px;
+
             background: rgba(18, 18, 26, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+
+            border: 1px solid rgba(255,255,255,0.08);
+
             border-radius: 14px;
+
             padding: 20px 25px;
+
             backdrop-filter: blur(12px);
+
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+
             z-index: 10;
+
             display: grid;
+
             grid-template-columns: 1fr 1fr;
+
             gap: 20px;
+
             align-items: center;
         }
 
         .slider-group {
             display: flex;
+
             flex-direction: column;
+
             gap: 8px;
         }
+
         .slider-header {
             display: flex;
+
             justify-content: space-between;
+
             font-size: 13px;
+
             font-weight: 500;
+
             color: #94a3b8;
         }
-        .slider-header span:last-child { font-family: monospace; color: #f8fafc; font-weight: 600; }
+
+        .slider-header span:last-child {
+            font-family: monospace;
+
+            color: #f8fafc;
+
+            font-weight: 600;
+        }
+
         input[type=range] {
             width: 100%;
+
             cursor: pointer;
+
             accent-color: #38bdf8;
+
             height: 6px;
+
             background: #334155;
+
             border-radius: 3px;
         }
 
-        /* Bottom Stat Cards */
+        /* =========================================================
+           STAT CARDS
+        ========================================================= */
+
         .cards-row {
             grid-column: span 2;
+
             display: grid;
+
             grid-template-columns: repeat(3, 1fr);
+
             gap: 15px;
+
             margin-top: 5px;
+
             border-top: 1px solid rgba(255,255,255,0.06);
+
             padding-top: 15px;
         }
+
         .stat-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255,255,255,0.02);
+
+            border: 1px solid rgba(255,255,255,0.06);
+
             border-radius: 8px;
+
             padding: 10px 14px;
         }
-        .stat-label { font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; }
-        .stat-value { font-size: 15px; font-weight: 700; color: #f8fafc; margin-top: 4px; }
+
+        .stat-label {
+            font-size: 11px;
+
+            font-weight: 600;
+
+            color: #64748b;
+
+            letter-spacing: 0.5px;
+
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 15px;
+
+            font-weight: 700;
+
+            color: #f8fafc;
+
+            margin-top: 4px;
+        }
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
+
+        @media (max-width: 800px) {
+
+            #instructions {
+                display: none;
+            }
+
+            #graph-container {
+                transform: scale(0.8);
+                transform-origin: top right;
+            }
+
+            #controls-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-row {
+                grid-column: span 1;
+
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <!-- Header -->
+    <!-- =========================================================
+         HEADER
+    ========================================================= -->
+
     <div id="header">
+
         <div class="title-area">
-            <h1>3D Conic Sections Explorer</h1>
-            <p>Slicing a double cone with an inclined cutting plane</p>
+
+            <h1>
+                3D Conic Sections Explorer
+            </h1>
+
+            <p>
+                Slicing a double cone with a cutting plane
+            </p>
+
         </div>
+
     </div>
+
+
+    <!-- =========================================================
+         INSTRUCTIONS
+    ========================================================= -->
 
     <div id="instructions">
-        🖱️ <b>Left Click + Drag</b> to Rotate | 📜 <b>Scroll</b> to Zoom
+
+        🖱️ <b>Left Click + Drag</b> to Rotate
+        |
+        📜 <b>Scroll</b> to Zoom
+
     </div>
 
-    <!-- 2D Graph Overlay -->
+
+    <!-- =========================================================
+         2D GRAPH
+    ========================================================= -->
+
     <div id="graph-container">
-        <div id="graph-title">2D CARTESIAN GRAPH</div>
-        <canvas id="graph2d" width="200" height="200"></canvas>
+
+        <div id="graph-title">
+            2D CARTESIAN GRAPH
+        </div>
+
+        <canvas
+            id="graph2d"
+            width="200"
+            height="200">
+        </canvas>
+
     </div>
 
-    <!-- Bottom Controls -->
+
+    <!-- =========================================================
+         CONTROLS
+    ========================================================= -->
+
     <div id="controls-panel">
-        <div class="slider-group">
-            <div class="slider-header">
-                <span>Plane Angle (θ)</span>
-                <span id="angleVal">0°</span>
-            </div>
-            <input type="range" id="angleSlider" min="0" max="85" value="0" step="1">
-        </div>
+
+        <!-- ANGLE -->
 
         <div class="slider-group">
+
             <div class="slider-header">
-                <span>Plane Offset (y₀)</span>
-                <span id="offsetVal">0.00</span>
+
+                <span>
+                    Plane Angle (θ)
+                </span>
+
+                <span id="angleVal">
+                    0°
+                </span>
+
             </div>
-            <input type="range" id="offsetSlider" min="-3" max="3" value="0" step="0.1">
+
+            <input
+                type="range"
+                id="angleSlider"
+                min="0"
+                max="85"
+                value="0"
+                step="0.1">
+
         </div>
+
+
+        <!-- OFFSET -->
+
+        <div class="slider-group">
+
+            <div class="slider-header">
+
+                <span>
+                    Plane Offset (y₀)
+                </span>
+
+                <span id="offsetVal">
+                    0.00
+                </span>
+
+            </div>
+
+            <input
+                type="range"
+                id="offsetSlider"
+                min="-3"
+                max="3"
+                value="0"
+                step="0.1">
+
+        </div>
+
+
+        <!-- STAT CARDS -->
 
         <div class="cards-row">
+
             <div class="stat-card">
-                <div class="stat-label">Section Type</div>
-                <div id="cardType" class="stat-value" style="color: #38bdf8;">Circle</div>
+
+                <div class="stat-label">
+                    Section Type
+                </div>
+
+                <div
+                    id="cardType"
+                    class="stat-value"
+                    style="color:#38bdf8;">
+                    Circle
+                </div>
+
             </div>
+
+
             <div class="stat-card">
-                <div class="stat-label">Eccentricity</div>
-                <div id="cardEcc" class="stat-value">e = 0.00</div>
+
+                <div class="stat-label">
+                    Eccentricity
+                </div>
+
+                <div
+                    id="cardEcc"
+                    class="stat-value">
+                    e = 0.00
+                </div>
+
             </div>
+
+
             <div class="stat-card">
-                <div class="stat-label">Condition</div>
-                <div id="cardCondition" class="stat-value">θ = 0°</div>
+
+                <div class="stat-label">
+                    Condition
+                </div>
+
+                <div
+                    id="cardCondition"
+                    class="stat-value">
+                    θ = 0°
+                </div>
+
             </div>
+
         </div>
+
     </div>
 
+
+    <!-- =========================================================
+         THREE.JS
+    ========================================================= -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
+
     <script>
-        // 1. Scene Setup
+
+        /* =========================================================
+           1. SCENE SETUP
+        ========================================================= */
+
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0d0d12, 0.012);
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(28, 14, 32);
+        scene.background = new THREE.Color(0x0d0d12);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild(renderer.domElement);
+        scene.fog = new THREE.FogExp2(
+            0x0d0d12,
+            0.012
+        );
 
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        /* =========================================================
+           CAMERA
+        ========================================================= */
+
+        const camera = new THREE.PerspectiveCamera(
+            45,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        camera.position.set(
+            28,
+            14,
+            32
+        );
+
+
+        /* =========================================================
+           RENDERER
+        ========================================================= */
+
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        renderer.setPixelRatio(
+            Math.min(window.devicePixelRatio, 2)
+        );
+
+        document.body.appendChild(
+            renderer.domElement
+        );
+
+
+        /* =========================================================
+           ORBIT CONTROLS
+        ========================================================= */
+
+        const controls =
+            new THREE.OrbitControls(
+                camera,
+                renderer.domElement
+            );
+
         controls.enableDamping = true;
+
         controls.dampingFactor = 0.05;
 
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(20, 40, 20);
-        scene.add(dirLight);
+        controls.target.set(
+            0,
+            0,
+            0
+        );
 
-        // Floor Grid
-        const grid = new THREE.GridHelper(80, 40, 0x1e293b, 0x0f172a);
+
+        /* =========================================================
+           LIGHTING
+        ========================================================= */
+
+        scene.add(
+            new THREE.AmbientLight(
+                0xffffff,
+                0.8
+            )
+        );
+
+
+        const dirLight =
+            new THREE.DirectionalLight(
+                0xffffff,
+                1.2
+            );
+
+        dirLight.position.set(
+            20,
+            40,
+            20
+        );
+
+        scene.add(
+            dirLight
+        );
+
+
+        /* =========================================================
+           FLOOR GRID
+        ========================================================= */
+
+        const grid =
+            new THREE.GridHelper(
+                80,
+                40,
+                0x1e293b,
+                0x0f172a
+            );
+
         grid.position.y = -10;
+
         scene.add(grid);
 
-        // 2. Double Cone Geometry
+
+        /* =========================================================
+           2. DOUBLE CONE
+        ========================================================= */
+
+        /*
+            Cone dimensions
+
+            Radius = 5
+            Half-height = 5
+            Total cone height = 10
+
+            Cone half-angle:
+
+            alpha = atan(radius / height)
+                  = atan(5 / 10)
+                  = 26.565°
+
+            This is the angle of a cone generator
+            relative to the cone's vertical axis.
+        */
+
         const coneRadius = 5;
+
         const coneHeight = 10;
-        const alphaRad = Math.atan(coneRadius / coneHeight); // ~26.56 degrees
-        const cosAlpha = Math.cos(alphaRad);
 
-        const coneGeo = new THREE.ConeGeometry(coneRadius, coneHeight, 64, 1, true);
-        const coneMat = new THREE.MeshPhysicalMaterial({
-            color: 0x38bdf8,
-            transparent: true,
-            opacity: 0.12,
-            side: THREE.DoubleSide,
-            roughness: 0.1,
-            metalness: 0.2,
-            depthWrite: false
-        });
+        const coneHalfHeight = coneHeight / 2;
 
-        const topCone = new THREE.Mesh(coneGeo, coneMat);
-        topCone.position.y = coneHeight / 2;
-        topCone.rotation.x = Math.PI;
 
-        const bottomCone = new THREE.Mesh(coneGeo, coneMat);
-        bottomCone.position.y = -coneHeight / 2;
+        const alphaRad =
+            Math.atan(
+                coneRadius / coneHeight
+            );
 
-        const coneGroup = new THREE.Group();
-        coneGroup.add(topCone);
-        coneGroup.add(bottomCone);
-        scene.add(coneGroup);
+        const alphaDeg =
+            alphaRad * 180 / Math.PI;
 
-        const edgesGeo = new THREE.EdgesGeometry(coneGeo, 15);
-        const edgesMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.25 });
-        topCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
-        bottomCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
 
-        // 3. Cutting Plane & Intersection Curve
-        const planeGroup = new THREE.Group();
-        const planeGeo = new THREE.PlaneGeometry(24, 24);
-        const planeMat = new THREE.MeshPhysicalMaterial({
-            color: 0x38bdf8,
-            transparent: true,
-            opacity: 0.3,
-            side: THREE.DoubleSide,
-            depthWrite: false
-        });
-        const planeMesh = new THREE.Mesh(planeGeo, planeMat);
-        planeMesh.rotation.x = Math.PI / 2;
-        
-        const planeEdges = new THREE.EdgesGeometry(planeGeo);
-        const planeEdgesMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5 });
-        planeMesh.add(new THREE.LineSegments(planeEdges, planeEdgesMat));
-        planeGroup.add(planeMesh);
-        scene.add(planeGroup);
+        /*
+            k = radius / height
 
-        // Glowing Intersection Curve on Plane
-        const curveGroup = new THREE.Group();
-        planeGroup.add(curveGroup);
+            Cone equation:
 
-        function updateCurve(type, colorHex, y0) {
-            while(curveGroup.children.length > 0) curveGroup.remove(curveGroup.children[0]);
+                x² + z² = k² y²
+        */
 
-            const lineMat = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 4, transparent: true, opacity: 1.0 });
-            const pts = [];
+        const k =
+            coneRadius / coneHeight;
 
-            // Scale curve appropriately on the plane surface
-            if (type === 'Circle') {
-                const r = Math.max(0.5, 2.5 * (1 - Math.abs(y0)/4));
-                for (let i = 0; i <= 64; i++) {
-                    const th = (i / 64) * Math.PI * 2;
-                    pts.push(new THREE.Vector3(Math.cos(th)*r, Math.sin(th)*r, 0.02));
+
+        /* =========================================================
+           CONE GEOMETRY
+        ========================================================= */
+
+        const coneGeo =
+            new THREE.ConeGeometry(
+                coneRadius,
+                coneHeight,
+                64,
+                1,
+                true
+            );
+
+
+        const coneMat =
+            new THREE.MeshPhysicalMaterial({
+
+                color: 0x38bdf8,
+
+                transparent: true,
+
+                opacity: 0.12,
+
+                side: THREE.DoubleSide,
+
+                roughness: 0.1,
+
+                metalness: 0.2,
+
+                depthWrite: false
+
+            });
+
+
+        /* =========================================================
+           TOP CONE
+        ========================================================= */
+
+        const topCone =
+            new THREE.Mesh(
+                coneGeo,
+                coneMat
+            );
+
+        topCone.position.y =
+            coneHalfHeight;
+
+        topCone.rotation.x =
+            Math.PI;
+
+
+        /* =========================================================
+           BOTTOM CONE
+        ========================================================= */
+
+        const bottomCone =
+            new THREE.Mesh(
+                coneGeo,
+                coneMat
+            );
+
+        bottomCone.position.y =
+            -coneHalfHeight;
+
+
+        /* =========================================================
+           CONE GROUP
+        ========================================================= */
+
+        const coneGroup =
+            new THREE.Group();
+
+        coneGroup.add(
+            topCone
+        );
+
+        coneGroup.add(
+            bottomCone
+        );
+
+        scene.add(
+            coneGroup
+        );
+
+
+        /* =========================================================
+           CONE EDGE LINES
+        ========================================================= */
+
+        const edgesGeo =
+            new THREE.EdgesGeometry(
+                coneGeo,
+                15
+            );
+
+
+        const edgesMat =
+            new THREE.LineBasicMaterial({
+
+                color: 0x38bdf8,
+
+                transparent: true,
+
+                opacity: 0.25
+
+            });
+
+
+        topCone.add(
+            new THREE.LineSegments(
+                edgesGeo,
+                edgesMat
+            )
+        );
+
+
+        bottomCone.add(
+            new THREE.LineSegments(
+                edgesGeo,
+                edgesMat
+            )
+        );
+
+
+        /* =========================================================
+           3. CUTTING PLANE
+        ========================================================= */
+
+        const planeGroup =
+            new THREE.Group();
+
+
+        /*
+            PlaneGeometry lies in the XY plane.
+
+            We rotate it around X.
+
+            theta = 0°
+                -> horizontal plane
+                -> perpendicular to cone axis
+                -> circle
+
+            theta increases
+                -> plane tilts toward cone axis
+        */
+
+        const planeGeo =
+            new THREE.PlaneGeometry(
+                24,
+                24
+            );
+
+
+        const planeMat =
+            new THREE.MeshPhysicalMaterial({
+
+                color: 0x38bdf8,
+
+                transparent: true,
+
+                opacity: 0.3,
+
+                side: THREE.DoubleSide,
+
+                roughness: 0.1,
+
+                metalness: 0.1,
+
+                depthWrite: false
+
+            });
+
+
+        const planeMesh =
+            new THREE.Mesh(
+                planeGeo,
+                planeMat
+            );
+
+
+        /*
+            Initial rotation will be
+            assigned in updateSimulation().
+        */
+
+        const planeEdges =
+            new THREE.EdgesGeometry(
+                planeGeo
+            );
+
+
+        const planeEdgesMat =
+            new THREE.LineBasicMaterial({
+
+                color: 0x38bdf8,
+
+                transparent: true,
+
+                opacity: 0.5
+
+            });
+
+
+        planeMesh.add(
+            new THREE.LineSegments(
+                planeEdges,
+                planeEdgesMat
+            )
+        );
+
+
+        planeGroup.add(
+            planeMesh
+        );
+
+
+        scene.add(
+            planeGroup
+        );
+
+
+        /* =========================================================
+           4. INTERSECTION CURVE
+        ========================================================= */
+
+        const curveGroup =
+            new THREE.Group();
+
+
+        planeGroup.add(
+            curveGroup
+        );
+
+
+        /*
+            IMPORTANT:
+
+            We calculate the REAL mathematical
+            intersection between:
+
+                x² + z² = k² y²
+
+            and the cutting plane.
+
+            Local plane coordinates:
+
+                u = x
+
+                v = local Y coordinate
+
+            The plane is rotated around X.
+
+            For theta:
+
+                world y =
+                    y0 + v * sin(theta)
+
+                world z =
+                    v * cos(theta)
+
+            Therefore:
+
+                x² + z²
+                    =
+                k² y²
+
+            becomes:
+
+                x² =
+                k²(y0 + v sinθ)²
+                -
+                v² cos²θ
+        */
+
+
+        function calculateIntersection(
+            thetaRad,
+            y0
+        ) {
+
+            const pointsPositive = [];
+
+            const pointsNegative = [];
+
+            /*
+                The cone only exists between:
+
+                    -10 <= y <= 10
+            */
+
+            const vMin = -30;
+
+            const vMax = 30;
+
+            const steps = 5000;
+
+
+            /*
+                We need separate line segments
+                whenever the mathematical curve
+                stops existing.
+            */
+
+            const positiveSegments = [];
+
+            const negativeSegments = [];
+
+
+            let positiveCurrent = [];
+
+            let negativeCurrent = [];
+
+
+            function finishPositive() {
+
+                if (
+                    positiveCurrent.length > 1
+                ) {
+
+                    positiveSegments.push(
+                        positiveCurrent
+                    );
+
                 }
-                curveGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
-            } else if (type === 'Ellipse') {
-                const rx = Math.max(0.5, 2.2 * (1 - Math.abs(y0)/4));
-                const ry = rx * 1.6;
-                for (let i = 0; i <= 64; i++) {
-                    const th = (i / 64) * Math.PI * 2;
-                    pts.push(new THREE.Vector3(Math.cos(th)*rx, Math.sin(th)*ry, 0.02));
-                }
-                curveGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
-            } else if (type === 'Parabola') {
-                for (let x = -3.5; x <= 3.5; x += 0.1) {
-                    const y = 0.35 * (x*x) - 2.5;
-                    pts.push(new THREE.Vector3(x, y, 0.02));
-                }
-                curveGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
-            } else if (type === 'Hyperbola') {
-                const p1 = [], p2 = [];
-                for (let y = -4.5; y <= 4.5; y += 0.1) {
-                    const x = Math.sqrt(1.2 + (y*y)*0.25);
-                    p1.push(new THREE.Vector3(x, y, 0.02));
-                    p2.push(new THREE.Vector3(-x, y, 0.02));
-                }
-                curveGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p1), lineMat));
-                curveGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p2), lineMat));
+
+                positiveCurrent = [];
+
             }
+
+
+            function finishNegative() {
+
+                if (
+                    negativeCurrent.length > 1
+                ) {
+
+                    negativeSegments.push(
+                        negativeCurrent
+                    );
+
+                }
+
+                negativeCurrent = [];
+
+            }
+
+
+            for (
+                let i = 0;
+                i <= steps;
+                i++
+            ) {
+
+                const v =
+                    vMin +
+                    (
+                        i / steps
+                    ) *
+                    (
+                        vMax - vMin
+                    );
+
+
+                /*
+                    Convert plane-local
+                    coordinates into world
+                    coordinates.
+
+                    Plane rotation:
+
+                        phi = 90° - theta
+
+                    Therefore:
+
+                        y = y0 + v*sin(theta)
+
+                        z = v*cos(theta)
+                */
+
+                const worldY =
+                    y0 +
+                    v *
+                    Math.sin(thetaRad);
+
+
+                const worldZ =
+                    v *
+                    Math.cos(thetaRad);
+
+
+                /*
+                    The finite cone is:
+
+                        -10 <= y <= 10
+                */
+
+                if (
+                    worldY < -coneHeight ||
+                    worldY > coneHeight
+                ) {
+
+                    finishPositive();
+                    finishNegative();
+
+                    continue;
+                }
+
+
+                /*
+                    Solve:
+
+                        x² + z² = k²y²
+
+                    for x².
+                */
+
+                let xSquared =
+                    (
+                        k * k *
+                        worldY *
+                        worldY
+                    ) -
+                    (
+                        worldZ *
+                        worldZ
+                    );
+
+
+                /*
+                    Floating point tolerance.
+                */
+
+                if (
+                    xSquared < 0 &&
+                    xSquared > -0.0001
+                ) {
+
+                    xSquared = 0;
+
+                }
+
+
+                /*
+                    No real intersection
+                    at this value of v.
+                */
+
+                if (
+                    xSquared < 0
+                ) {
+
+                    finishPositive();
+                    finishNegative();
+
+                    continue;
+                }
+
+
+                const x =
+                    Math.sqrt(
+                        xSquared
+                    );
+
+
+                /*
+                    Positive X branch
+                */
+
+                positiveCurrent.push(
+
+                    new THREE.Vector3(
+                        x,
+                        v,
+                        0.025
+                    )
+
+                );
+
+
+                /*
+                    Negative X branch
+                */
+
+                negativeCurrent.push(
+
+                    new THREE.Vector3(
+                        -x,
+                        v,
+                        0.025
+                    )
+
+                );
+
+            }
+
+
+            finishPositive();
+
+            finishNegative();
+
+
+            return {
+                positive: positiveSegments,
+                negative: negativeSegments
+            };
         }
 
-        // 4. 2D Cartesian Graph Canvas Renderer
-        const canvas2d = document.getElementById('graph2d');
-        const ctx = canvas2d.getContext('2d');
 
-        function draw2DGraph(type, color) {
-            ctx.clearRect(0, 0, 200, 200);
-            const cx = 100, cy = 100;
+        /* =========================================================
+           UPDATE INTERSECTION CURVE
+        ========================================================= */
 
-            // Grid
-            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-            ctx.lineWidth = 1;
-            for(let i=0; i<200; i+=20) {
-                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 200); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(200, i); ctx.stroke();
+        function updateCurve(
+            thetaRad,
+            y0,
+            colorHex
+        ) {
+
+            /*
+                Remove previous curves.
+            */
+
+            while (
+                curveGroup.children.length > 0
+            ) {
+
+                const child =
+                    curveGroup.children[0];
+
+
+                if (child.geometry) {
+                    child.geometry.dispose();
+                }
+
+
+                if (child.material) {
+
+                    if (
+                        Array.isArray(
+                            child.material
+                        )
+                    ) {
+
+                        child.material.forEach(
+                            m => m.dispose()
+                        );
+
+                    } else {
+
+                        child.material.dispose();
+
+                    }
+
+                }
+
+
+                curveGroup.remove(
+                    child
+                );
             }
 
-            // Axes
-            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-            ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, 200); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(200, cy); ctx.stroke();
 
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2.5;
+            const intersection =
+                calculateIntersection(
+                    thetaRad,
+                    y0
+                );
+
+
+            /*
+                Main curve material
+            */
+
+            const lineMat =
+                new THREE.LineBasicMaterial({
+
+                    color: colorHex,
+
+                    linewidth: 3,
+
+                    transparent: true,
+
+                    opacity: 1
+
+                });
+
+
+            /*
+                Draw positive branches.
+            */
+
+            intersection.positive.forEach(
+                segment => {
+
+                    const geometry =
+                        new THREE.BufferGeometry()
+                            .setFromPoints(
+                                segment
+                            );
+
+
+                    const line =
+                        new THREE.Line(
+                            geometry,
+                            lineMat.clone()
+                        );
+
+
+                    curveGroup.add(
+                        line
+                    );
+
+                }
+            );
+
+
+            /*
+                Draw negative branches.
+            */
+
+            intersection.negative.forEach(
+                segment => {
+
+                    const geometry =
+                        new THREE.BufferGeometry()
+                            .setFromPoints(
+                                segment
+                            );
+
+
+                    const line =
+                        new THREE.Line(
+                            geometry,
+                            lineMat.clone()
+                        );
+
+
+                    curveGroup.add(
+                        line
+                    );
+
+                }
+            );
+        }
+
+
+        /* =========================================================
+           5. 2D GRAPH
+        ========================================================= */
+
+        const canvas2d =
+            document.getElementById(
+                "graph2d"
+            );
+
+
+        const ctx =
+            canvas2d.getContext(
+                "2d"
+            );
+
+
+        /*
+            Draw the SAME mathematical
+            intersection used by the 3D scene.
+
+            This means the 2D graph is no
+            longer an approximate shape.
+        */
+
+        function draw2DGraph(
+            thetaRad,
+            y0,
+            type,
+            color
+        ) {
+
+            ctx.clearRect(
+                0,
+                0,
+                200,
+                200
+            );
+
+
+            const width = 200;
+
+            const height = 200;
+
+
+            const cx = 100;
+
+            const cy = 100;
+
+
+            /* =====================================================
+               GRID
+            ===================================================== */
+
+            ctx.strokeStyle =
+                "rgba(255,255,255,0.04)";
+
+            ctx.lineWidth = 1;
+
+
+            for (
+                let i = 0;
+                i <= 200;
+                i += 20
+            ) {
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    i,
+                    0
+                );
+
+                ctx.lineTo(
+                    i,
+                    200
+                );
+
+                ctx.stroke();
+
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    0,
+                    i
+                );
+
+                ctx.lineTo(
+                    200,
+                    i
+                );
+
+                ctx.stroke();
+
+            }
+
+
+            /* =====================================================
+               AXES
+            ===================================================== */
+
+            ctx.strokeStyle =
+                "rgba(255,255,255,0.2)";
+
+            ctx.lineWidth = 1;
+
+
             ctx.beginPath();
 
-            let formula = "";
-            if (type === 'Circle') {
-                ctx.arc(cx, cy, 45, 0, Math.PI * 2);
-                ctx.stroke();
-                formula = "x² + y² = r²";
-            } else if (type === 'Ellipse') {
-                ctx.ellipse(cx, cy, 60, 30, 0, 0, Math.PI * 2);
-                ctx.stroke();
-                formula = "x²/a² + y²/b² = 1";
-            } else if (type === 'Parabola') {
-                for (let x = -80; x <= 80; x++) {
-                    let y = (x * x) / -50;
-                    if (x === -80) ctx.moveTo(cx + x, cy - y + 40);
-                    else ctx.lineTo(cx + x, cy - y + 40);
+            ctx.moveTo(
+                cx,
+                0
+            );
+
+            ctx.lineTo(
+                cx,
+                200
+            );
+
+            ctx.stroke();
+
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                0,
+                cy
+            );
+
+            ctx.lineTo(
+                200,
+                cy
+            );
+
+            ctx.stroke();
+
+
+            /* =====================================================
+               GET CURVE DATA
+            ===================================================== */
+
+            const intersection =
+                calculateIntersection(
+                    thetaRad,
+                    y0
+                );
+
+
+            const allPoints = [];
+
+
+            intersection.positive.forEach(
+                segment => {
+
+                    segment.forEach(
+                        p => allPoints.push(p)
+                    );
+
                 }
-                ctx.stroke();
-                formula = "y² = 4ax";
-            } else if (type === 'Hyperbola') {
-                for(let y = -80; y <= 80; y++) {
-                    let x = -Math.sqrt(1 + (y*y)/800) * 22;
-                    if(y===-80) ctx.moveTo(cx + x, cy + y);
-                    else ctx.lineTo(cx + x, cy + y);
+            );
+
+
+            intersection.negative.forEach(
+                segment => {
+
+                    segment.forEach(
+                        p => allPoints.push(p)
+                    );
+
                 }
-                ctx.stroke();
-                ctx.beginPath();
-                for(let y = -80; y <= 80; y++) {
-                    let x = Math.sqrt(1 + (y*y)/800) * 22;
-                    if(y===-80) ctx.moveTo(cx + x, cy + y);
-                    else ctx.lineTo(cx + x, cy + y);
-                }
-                ctx.stroke();
-                formula = "x²/a² - y²/b² = 1";
+            );
+
+
+            /*
+                Nothing to draw.
+            */
+
+            if (
+                allPoints.length === 0
+            ) {
+
+                ctx.fillStyle =
+                    "#94a3b8";
+
+                ctx.font =
+                    '12px "Segoe UI"';
+
+                ctx.textAlign =
+                    "center";
+
+                ctx.fillText(
+                    "No intersection",
+                    cx,
+                    cy
+                );
+
+                return;
             }
 
-            ctx.fillStyle = '#f8fafc';
-            ctx.font = 'bold 13px "Segoe UI"';
-            ctx.textAlign = 'center';
-            ctx.fillText(formula, cx, 185);
+
+            /* =====================================================
+               FIND GRAPH BOUNDS
+            ===================================================== */
+
+            let minX = Infinity;
+            let maxX = -Infinity;
+
+            let minY = Infinity;
+            let maxY = -Infinity;
+
+
+            allPoints.forEach(
+                p => {
+
+                    minX =
+                        Math.min(
+                            minX,
+                            p.x
+                        );
+
+                    maxX =
+                        Math.max(
+                            maxX,
+                            p.x
+                        );
+
+                    minY =
+                        Math.min(
+                            minY,
+                            p.y
+                        );
+
+                    maxY =
+                        Math.max(
+                            maxY,
+                            p.y
+                        );
+
+                }
+            );
+
+
+            /*
+                Give the graph some padding.
+            */
+
+            const rangeX =
+                Math.max(
+                    maxX - minX,
+                    0.5
+                );
+
+
+            const rangeY =
+                Math.max(
+                    maxY - minY,
+                    0.5
+                );
+
+
+            const range =
+                Math.max(
+                    rangeX,
+                    rangeY
+                );
+
+
+            /*
+                Keep the shape centered.
+            */
+
+            const centerX =
+                (minX + maxX) / 2;
+
+
+            const centerY =
+                (minY + maxY) / 2;
+
+
+            const scale =
+                150 / range;
+
+
+            /* =====================================================
+               DRAW CURVE
+            ===================================================== */
+
+            ctx.strokeStyle =
+                color;
+
+            ctx.lineWidth = 2.5;
+
+            ctx.lineCap = "round";
+
+            ctx.lineJoin = "round";
+
+
+            function drawSegment(
+                segment
+            ) {
+
+                if (
+                    segment.length < 2
+                ) {
+
+                    return;
+
+                }
+
+
+                ctx.beginPath();
+
+
+                segment.forEach(
+                    (p, index) => {
+
+                        const px =
+                            cx +
+                            (
+                                p.x -
+                                centerX
+                            ) *
+                            scale;
+
+
+                        const py =
+                            cy -
+                            (
+                                p.y -
+                                centerY
+                            ) *
+                            scale;
+
+
+                        /*
+                            Keep graph
+                            inside canvas.
+                        */
+
+                        if (
+                            index === 0
+                        ) {
+
+                            ctx.moveTo(
+                                px,
+                                py
+                            );
+
+                        } else {
+
+                            ctx.lineTo(
+                                px,
+                                py
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                ctx.stroke();
+
+            }
+
+
+            intersection.positive.forEach(
+                drawSegment
+            );
+
+
+            intersection.negative.forEach(
+                drawSegment
+            );
+
+
+            /* =====================================================
+               FORMULA
+            ===================================================== */
+
+            let formula = "";
+
+
+            if (
+                type === "Circle"
+            ) {
+
+                formula =
+                    "Circle";
+
+            }
+            else if (
+                type === "Ellipse"
+            ) {
+
+                formula =
+                    "Ellipse";
+
+            }
+            else if (
+                type === "Parabola"
+            ) {
+
+                formula =
+                    "Parabola";
+
+            }
+            else {
+
+                formula =
+                    "Hyperbola";
+
+            }
+
+
+            ctx.fillStyle =
+                "#f8fafc";
+
+            ctx.font =
+                'bold 12px "Segoe UI"';
+
+            ctx.textAlign =
+                "center";
+
+
+            ctx.fillText(
+                formula,
+                cx,
+                188
+            );
+
         }
 
-        // 5. UI Elements & Logic
-        const angleSlider = document.getElementById('angleSlider');
-        const offsetSlider = document.getElementById('offsetSlider');
-        
-        const angleVal = document.getElementById('angleVal');
-        const offsetVal = document.getElementById('offsetVal');
-        
-        const cardType = document.getElementById('cardType');
-        const cardEcc = document.getElementById('cardEcc');
-        const cardCondition = document.getElementById('cardCondition');
 
-        const alphaDeg = (alphaRad * (180 / Math.PI));
+        /* =========================================================
+           6. UI ELEMENTS
+        ========================================================= */
+
+        const angleSlider =
+            document.getElementById(
+                "angleSlider"
+            );
+
+
+        const offsetSlider =
+            document.getElementById(
+                "offsetSlider"
+            );
+
+
+        const angleVal =
+            document.getElementById(
+                "angleVal"
+            );
+
+
+        const offsetVal =
+            document.getElementById(
+                "offsetVal"
+            );
+
+
+        const cardType =
+            document.getElementById(
+                "cardType"
+            );
+
+
+        const cardEcc =
+            document.getElementById(
+                "cardEcc"
+            );
+
+
+        const cardCondition =
+            document.getElementById(
+                "cardCondition"
+            );
+
+
+        /* =========================================================
+           CORRECT PARABOLA ANGLE
+        ========================================================= */
+
+        /*
+            Cone generator angle:
+
+                alpha = atan(r/h)
+
+            = 26.565°
+
+            But our slider measures the
+            TILT of the plane away from
+            the horizontal circular plane.
+
+            Therefore the parabola occurs at:
+
+                thetaCritical
+                    =
+                90° - alpha
+
+                    =
+                63.435°
+        */
+
+        const criticalAngleDeg =
+            90 - alphaDeg;
+
+
+        const criticalAngleRad =
+            criticalAngleDeg *
+            Math.PI /
+            180;
+
+
+        /* =========================================================
+           UPDATE SIMULATION
+        ========================================================= */
 
         function updateSimulation() {
-            const thetaDeg = parseFloat(angleSlider.value);
-            const y0 = parseFloat(offsetSlider.value);
 
-            angleVal.innerText = thetaDeg + '°';
-            offsetVal.innerText = y0.toFixed(2);
+            const thetaDeg =
+                parseFloat(
+                    angleSlider.value
+                );
 
-            planeGroup.rotation.x = thetaDeg * (Math.PI / 180);
-            planeGroup.position.y = y0;
 
-            const thetaRad = thetaDeg * (Math.PI / 180);
-            const e = Math.sin(thetaRad) / cosAlpha;
+            const y0 =
+                parseFloat(
+                    offsetSlider.value
+                );
 
-            let type = "Circle";
-            let color = "#38bdf8";
-            let conditionText = "θ = 0°";
 
-            if (thetaDeg === 0) {
-                type = "Circle";
-                color = "#38bdf8";
-                conditionText = "θ = 0° (⊥ to axis)";
-            } else if (thetaDeg < 26.5) {
-                type = "Ellipse";
-                color = "#a855f7";
-                conditionText = "θ < α";
-            } else if (thetaDeg >= 26.5 && thetaDeg <= 27.5) {
-                type = "Parabola";
-                color = "#f59e0b";
-                conditionText = "θ = α";
-            } else {
-                type = "Hyperbola";
-                color = "#10b981";
-                conditionText = "θ > α";
+            const thetaRad =
+                thetaDeg *
+                Math.PI /
+                180;
+
+
+            /* =====================================================
+               UPDATE UI
+            ===================================================== */
+
+            angleVal.innerText =
+                thetaDeg.toFixed(1) +
+                "°";
+
+
+            offsetVal.innerText =
+                y0.toFixed(2);
+
+
+            /* =====================================================
+               ROTATE CUTTING PLANE
+            ===================================================== */
+
+            /*
+                PlaneGeometry starts
+                in the XY plane.
+
+                To make it horizontal
+                at theta = 0:
+
+                    rotation = 90°
+
+                Then tilt it toward
+                the cone axis by theta.
+
+                    rotation =
+                    90° - theta
+            */
+
+            planeGroup.rotation.x =
+                Math.PI / 2 -
+                thetaRad;
+
+
+            /*
+                Move plane along
+                cone axis.
+            */
+
+            planeGroup.position.y =
+                y0;
+
+
+            /* =====================================================
+               CLASSIFY SECTION
+            ===================================================== */
+
+            let type;
+
+            let color;
+
+            let conditionText;
+
+
+            /*
+                EXACT CIRCLE
+            */
+
+            if (
+                Math.abs(thetaDeg) <
+                0.05
+            ) {
+
+                type =
+                    "Circle";
+
+                color =
+                    "#38bdf8";
+
+                conditionText =
+                    "θ = 0°";
+
             }
 
-            cardType.innerText = type;
-            cardType.style.color = color;
-            cardEcc.innerText = `e = ${e.toFixed(2)}`;
-            cardCondition.innerText = conditionText;
 
-            planeMat.color.set(color);
-            planeEdgesMat.color.set(color);
+            /*
+                ELLIPSE
+            */
 
-            updateCurve(type, color, y0);
-            draw2DGraph(type, color);
+            else if (
+                thetaDeg <
+                criticalAngleDeg - 0.5
+            ) {
+
+                type =
+                    "Ellipse";
+
+                color =
+                    "#a855f7";
+
+                conditionText =
+                    `θ < ${criticalAngleDeg.toFixed(2)}°`;
+
+            }
+
+
+            /*
+                PARABOLA
+            */
+
+            else if (
+                Math.abs(
+                    thetaDeg -
+                    criticalAngleDeg
+                ) <= 0.5
+            ) {
+
+                type =
+                    "Parabola";
+
+                color =
+                    "#f59e0b";
+
+                conditionText =
+                    `θ ≈ ${criticalAngleDeg.toFixed(2)}°`;
+
+            }
+
+
+            /*
+                HYPERBOLA
+            */
+
+            else {
+
+                type =
+                    "Hyperbola";
+
+                color =
+                    "#10b981";
+
+                conditionText =
+                    `θ > ${criticalAngleDeg.toFixed(2)}°`;
+
+            }
+
+
+            /* =====================================================
+               ECCENTRICITY
+            ===================================================== */
+
+            /*
+                For this cone:
+
+                    e =
+                    sin(theta) /
+                    cos(alpha)
+
+                At the critical angle:
+
+                    e = 1
+
+                Therefore:
+
+                    e < 1 -> ellipse
+
+                    e = 1 -> parabola
+
+                    e > 1 -> hyperbola
+            */
+
+            let eccentricity =
+                Math.sin(thetaRad) /
+                Math.cos(alphaRad);
+
+
+            /*
+                Avoid displaying
+                tiny floating errors.
+            */
+
+            if (
+                Math.abs(
+                    eccentricity
+                ) < 0.0001
+            ) {
+
+                eccentricity = 0;
+
+            }
+
+
+            /* =====================================================
+               UPDATE STAT CARDS
+            ===================================================== */
+
+            cardType.innerText =
+                type;
+
+
+            cardType.style.color =
+                color;
+
+
+            cardEcc.innerText =
+                `e = ${eccentricity.toFixed(2)}`;
+
+
+            cardCondition.innerText =
+                conditionText;
+
+
+            /* =====================================================
+               UPDATE PLANE COLOR
+            ===================================================== */
+
+            planeMat.color.set(
+                color
+            );
+
+
+            planeEdgesMat.color.set(
+                color
+            );
+
+
+            /* =====================================================
+               UPDATE REAL 3D CURVE
+            ===================================================== */
+
+            updateCurve(
+                thetaRad,
+                y0,
+                color
+            );
+
+
+            /* =====================================================
+               UPDATE REAL 2D GRAPH
+            ===================================================== */
+
+            draw2DGraph(
+                thetaRad,
+                y0,
+                type,
+                color
+            );
+
         }
 
-        angleSlider.addEventListener('input', updateSimulation);
-        offsetSlider.addEventListener('input', updateSimulation);
+
+        /* =========================================================
+           SLIDER EVENTS
+        ========================================================= */
+
+        angleSlider.addEventListener(
+            "input",
+            updateSimulation
+        );
+
+
+        offsetSlider.addEventListener(
+            "input",
+            updateSimulation
+        );
+
+
+        /* =========================================================
+           INITIAL UPDATE
+        ========================================================= */
+
         updateSimulation();
 
-        // 6. Animation Loop
+
+        /* =========================================================
+           7. ANIMATION LOOP
+        ========================================================= */
+
         function animate() {
-            requestAnimationFrame(animate);
+
+            requestAnimationFrame(
+                animate
+            );
+
+
             controls.update();
-            renderer.render(scene, camera);
+
+
+            renderer.render(
+                scene,
+                camera
+            );
+
         }
+
+
         animate();
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+
+        /* =========================================================
+           8. WINDOW RESIZE
+        ========================================================= */
+
+        window.addEventListener(
+            "resize",
+            () => {
+
+                camera.aspect =
+                    window.innerWidth /
+                    window.innerHeight;
+
+
+                camera.updateProjectionMatrix();
+
+
+                renderer.setSize(
+                    window.innerWidth,
+                    window.innerHeight
+                );
+
+            }
+        );
+
     </script>
+
 </body>
 </html>
