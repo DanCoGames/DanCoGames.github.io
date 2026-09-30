@@ -160,14 +160,14 @@
         bottomCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
 
         /* =========================================
-           3. SLICING PLANE GEOMETRY
+           3. SLICING PLANE & INTERSECTION CURVE
         ========================================= */
         const planeGroup = new THREE.Group();
         const planeGeo = new THREE.PlaneGeometry(28, 28);
         const planeMat = new THREE.MeshPhysicalMaterial({
             color: 0xff3366,
             transparent: true,
-            opacity: 0.5,
+            opacity: 0.4,
             side: THREE.DoubleSide,
             depthWrite: false
         });
@@ -175,11 +175,66 @@
         planeMesh.rotation.x = Math.PI / 2; 
         
         const planeEdges = new THREE.EdgesGeometry(planeGeo);
-        const planeEdgesMat = new THREE.LineBasicMaterial({ color: 0xffaacc, linewidth: 2 });
+        const planeEdgesMat = new THREE.LineBasicMaterial({ color: 0xffaacc, linewidth: 1 });
         planeMesh.add(new THREE.LineSegments(planeEdges, planeEdgesMat));
 
         planeGroup.add(planeMesh);
         scene.add(planeGroup);
+
+        // Glowing Intersection Curve Mesh Group
+        const curveGroup = new THREE.Group();
+        planeGroup.add(curveGroup);
+
+        function updateIntersectionCurve(type, color) {
+            // Clear old curve children
+            while(curveGroup.children.length > 0){ 
+                curveGroup.remove(curveGroup.children[0]); 
+            }
+
+            const lineMat = new THREE.LineBasicMaterial({ color: color, linewidth: 4, transparent: true, opacity: 0.9 });
+            const points = [];
+
+            if (type === 'Circle') {
+                const r = 3.2;
+                for (let i = 0; i <= 64; i++) {
+                    const theta = (i / 64) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(theta) * r, Math.sin(theta) * r, 0.05));
+                }
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                curveGroup.add(new THREE.Line(geo, lineMat));
+            } 
+            else if (type === 'Ellipse') {
+                const rx = 3.2;
+                const ry = 5.2;
+                for (let i = 0; i <= 64; i++) {
+                    const theta = (i / 64) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(theta) * rx, Math.sin(theta) * ry, 0.05));
+                }
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                curveGroup.add(new THREE.Line(geo, lineMat));
+            } 
+            else if (type === 'Parabola') {
+                for (let x = -4.5; x <= 4.5; x += 0.1) {
+                    const y = 0.35 * (x * x) - 3.5;
+                    points.push(new THREE.Vector3(x, y, 0.05));
+                }
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                curveGroup.add(new THREE.Line(geo, lineMat));
+            } 
+            else if (type === 'Hyperbola') {
+                // Two separate branches for hyperbola
+                const pts1 = [], pts2 = [];
+                for (let y = -6; y <= 6; y += 0.1) {
+                    const xVal = Math.sqrt(2.5 + (y * y) * 0.25);
+                    pts1.push(new THREE.Vector3(xVal, y, 0.05));
+                    pts2.push(new THREE.Vector3(-xVal, y, 0.05));
+                }
+                const geo1 = new THREE.BufferGeometry().setFromPoints(pts1);
+                const geo2 = new THREE.BufferGeometry().setFromPoints(pts2);
+                curveGroup.add(new THREE.Line(geo1, lineMat));
+                curveGroup.add(new THREE.Line(geo2, lineMat));
+            }
+        }
 
         /* =========================================
            4. 2D CANVAS GRAPH DRAWING LOGIC
@@ -205,7 +260,7 @@
             ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, 220); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(220, cy); ctx.stroke();
 
-            // Draw the mathematical curve
+            // Draw Curve
             ctx.strokeStyle = color;
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -232,14 +287,12 @@
                 formulaText = "y² = 4ax";
             } 
             else if (type === 'Hyperbola') {
-                // Left branch
                 for(let y = -100; y <= 100; y++) {
                     let x = -Math.sqrt(1 + (y*y)/1000) * 25;
                     if(y===-100) ctx.moveTo(cx + x, cy + y);
                     else ctx.lineTo(cx + x, cy + y);
                 }
                 ctx.stroke();
-                // Right branch
                 ctx.beginPath();
                 for(let y = -100; y <= 100; y++) {
                     let x = Math.sqrt(1 + (y*y)/1000) * 25;
@@ -250,7 +303,6 @@
                 formulaText = "x²/a² - y²/b² = 1";
             }
 
-            // Draw Formula Text
             ctx.fillStyle = 'white';
             ctx.font = 'bold 15px "Segoe UI"';
             ctx.textAlign = 'center';
@@ -264,25 +316,20 @@
         const nameLabel = document.getElementById('conic-name');
         const eccentricityLabel = document.getElementById('eccentricity-display');
 
-        // Cone half-angle alpha = atan(Radius / Height) = atan(6 / 12)
         const alpha = Math.atan(6 / 12); 
         const cosAlpha = Math.cos(alpha);
 
         function updateSimulation() {
             const angleDeg = parseFloat(slider.value);
-            
-            // 1. Rotate the plane
             planeGroup.rotation.x = angleDeg * (Math.PI / 180);
             
             let text = "";
             let color = "";
             let eccentricityText = "";
 
-            // Calculate dynamic eccentricity
             const angleRad = angleDeg * (Math.PI / 180);
             let eCalc = Math.sin(angleRad) / cosAlpha;
 
-            // 2. MATHEMATICAL FIX & CLASSIFICATION
             if (angleDeg === 0) {
                 text = "Circle";
                 color = "#ff3366";
@@ -306,25 +353,23 @@
                 color = "#00ffaa";
                 eccentricityText = `e = ${eCalc.toFixed(2)}  (e > 1)`;
                 
-                // Translate plane to avoid apex intersection (degenerate conic)
                 let t = (angleDeg - 64.5) / (90 - 64.5); 
                 planeGroup.position.set(0, 5 * (1 - t), 2.5 * t); 
             }
             
-            // 3. Update Visuals
             nameLabel.innerText = text;
             nameLabel.style.color = color;
             eccentricityLabel.innerText = eccentricityText;
             planeMat.color.set(color); 
             planeEdgesMat.color.set(color);
 
-            // 4. Update the 2D Cartesian Graph
+            // Update 3D intersection curve & 2D graph
+            updateIntersectionCurve(text, color);
             drawGraph(text, color);
         }
 
-        // Initialize state
         slider.addEventListener('input', updateSimulation);
-        updateSimulation(); // Call once to set initial Circle state
+        updateSimulation();
 
         /* =========================================
            6. RENDER LOOP
