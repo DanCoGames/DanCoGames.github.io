@@ -3,123 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conic Sections Visualizer</title>
+    <title>3D Conic Visualizer — DanCo Tools</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
-        #controls {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            background: rgba(20, 20, 20, 0.85);
-            padding: 20px 40px;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: radial-gradient(circle at center, #1e1e2f 0%, #0a0a10 100%); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: white; 
+            user-select: none;
         }
-        h3 { margin: 0 0 15px 0; font-weight: 500; letter-spacing: 1px; }
-        #conicName { font-size: 24px; font-weight: bold; color: #ff3366; margin: 15px 0 0 0; }
-        input[type=range] { width: 300px; cursor: pointer; }
+        #ui-container {
+            position: absolute; 
+            bottom: 30px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(15, 15, 20, 0.85); 
+            padding: 20px 30px; 
+            border-radius: 12px;
+            text-align: center; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            width: 320px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+        }
+        h3 { margin: 0 0 10px; font-size: 14px; color: #8892b0; font-weight: 600; letter-spacing: 1px;}
+        #conic-name { font-size: 32px; font-weight: bold; margin: 10px 0 0 0; color: #ff3366; text-transform: uppercase; letter-spacing: 2px;}
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #ff3366; }
+        #instructions { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            background: rgba(0,0,0,0.5); 
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            color: #ccd6f6; 
+            font-size: 13px; 
+            pointer-events: none; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
     </style>
 </head>
 <body>
-    <div id="controls">
-        <h3>Adjust Slicing Angle</h3>
-        <input type="range" id="angleSlider" min="0" max="90" value="0" step="1">
-        <p id="conicName">Circle</p>
+    
+    <div id="instructions">
+        🖱️ <b>Left Click + Drag</b> to Rotate Scene<br>
+        📜 <b>Scroll Wheel</b> to Zoom
     </div>
 
+    <div id="ui-container">
+        <h3>SLICING PLANE ANGLE</h3>
+        <input type="range" id="angleSlider" min="0" max="90" value="0" step="1">
+        <div id="conic-name">Circle</div>
+    </div>
+
+    <!-- Core Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls (Makes it truly interactive 3D) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
     <script>
-        // Basic Scene Setup
+        // 1. Scene Setup
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        scene.fog = new THREE.FogExp2(0x0a0a10, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(25, 15, 35); // Start at a nice angled view
+
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio); // Crisp on high-res displays
         document.body.appendChild(renderer.domElement);
 
-        // Lighting
-        const light = new THREE.DirectionalLight(0xffffff, 1.2);
-        light.position.set(10, 20, 15);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040, 2));
+        // 2. Camera Controls (This is what makes it feel 3D!)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; 
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 100;
+        controls.minDistance = 10;
 
-        // Glass-like Material for the Cones
-        const coneMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x0088ff, 
-            transparent: true, 
-            opacity: 0.35, 
+        // 3. Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(20, 40, 20);
+        scene.add(dirLight);
+        
+        const blueLight = new THREE.PointLight(0x0088ff, 2, 50);
+        blueLight.position.set(-20, 10, -20);
+        scene.add(blueLight);
+
+        // 4. Environment Grid
+        const gridHelper = new THREE.GridHelper(100, 50, 0x333344, 0x1a1a24);
+        gridHelper.position.y = -12;
+        scene.add(gridHelper);
+
+        // 5. Geometry: The Double Cone (Using high-quality physical material)
+        const coneGeo = new THREE.ConeGeometry(6, 12, 64, 1, true); // true = open ended
+        const coneMat = new THREE.MeshPhysicalMaterial({
+            color: 0x00aaff,
+            transparent: true,
+            opacity: 0.15,
             side: THREE.DoubleSide,
-            shininess: 100
+            roughness: 0.1,
+            metalness: 0.2,
+            clearcoat: 1.0,
+            depthWrite: false // Prevents visual glitching when overlapping transparent objects
         });
 
-        // Constructing the Double Cone
-        const coneGeo = new THREE.ConeGeometry(5, 10, 64, 1, false, 0, Math.PI * 2);
-        
-        const topCone = new THREE.Mesh(coneGeo, coneMaterial);
-        topCone.position.y = 5;
-        topCone.rotation.x = Math.PI; // Point downwards
-        
-        const bottomCone = new THREE.Mesh(coneGeo, coneMaterial);
-        bottomCone.position.y = -5; // Point upwards
+        const topCone = new THREE.Mesh(coneGeo, coneMat);
+        topCone.position.y = 6;
+        topCone.rotation.x = Math.PI; 
+
+        const bottomCone = new THREE.Mesh(coneGeo, coneMat);
+        bottomCone.position.y = -6; 
 
         const coneGroup = new THREE.Group();
         coneGroup.add(topCone);
         coneGroup.add(bottomCone);
         scene.add(coneGroup);
 
-        // Intersecting Slicing Plane
-        const planeGeo = new THREE.PlaneGeometry(16, 16);
-        const planeMat = new THREE.MeshBasicMaterial({ 
-            color: 0xff3366, 
-            transparent: true, 
-            opacity: 0.6, 
-            side: THREE.DoubleSide 
+        // Add structural wireframes to cones to make the 3D shape distinct
+        const edgesGeo = new THREE.EdgesGeometry(coneGeo, 15);
+        const edgesMat = new THREE.LineBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.3 });
+        topCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
+        bottomCone.add(new THREE.LineSegments(edgesGeo, edgesMat));
+
+        // 6. Geometry: The Slicing Plane
+        const planeGroup = new THREE.Group();
+        
+        const planeGeo = new THREE.PlaneGeometry(26, 26);
+        const planeMat = new THREE.MeshPhysicalMaterial({
+            color: 0xff3366,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide,
+            roughness: 0.3,
+            metalness: 0.5,
+            clearcoat: 0.5,
+            depthWrite: false
         });
-        const plane = new THREE.Mesh(planeGeo, planeMat);
-        scene.add(plane);
+        const planeMesh = new THREE.Mesh(planeGeo, planeMat);
+        planeMesh.rotation.x = Math.PI / 2; // Lay flat initially
+        
+        // Add a glowing border to the cutting plane
+        const planeEdges = new THREE.EdgesGeometry(planeGeo);
+        const planeEdgesMat = new THREE.LineBasicMaterial({ color: 0xffaacc, linewidth: 2 });
+        planeMesh.add(new THREE.LineSegments(planeEdges, planeEdgesMat));
 
-        // Positioning
-        camera.position.set(0, 12, 28);
-        camera.lookAt(0, 0, 0);
+        planeGroup.add(planeMesh);
+        scene.add(planeGroup);
 
-        // Slider Interaction Logic
+        // 7. UI Slider Logic
         const slider = document.getElementById('angleSlider');
-        const nameLabel = document.getElementById('conicName');
+        const nameLabel = document.getElementById('conic-name');
 
         slider.addEventListener('input', (e) => {
             const angleDeg = parseFloat(e.target.value);
-            plane.rotation.x = angleDeg * (Math.PI / 180);
             
-            // Mathematical bounds for conic sections
-            // Cone base radius = 5, height = 10. Generator angle from vertical = atan(5/10) = 26.56°
-            // Critical angle from horizontal = 90 - 26.56 = 63.43°
-            let text = "Circle";
+            // Rotate the plane container
+            planeGroup.rotation.x = angleDeg * (Math.PI / 180);
+            
+            // Mathematical checks to name the conic
+            // Base = 6, Height = 12. Angle of cone generator = atan(12/6) = 63.43°
+            let text = "";
+            let color = "";
+
             if (angleDeg === 0) {
                 text = "Circle";
+                color = "#ff3366";
             } else if (angleDeg < 63) {
                 text = "Ellipse";
+                color = "#bb33ff";
             } else if (angleDeg >= 63 && angleDeg <= 64) {
                 text = "Parabola";
+                color = "#ffaa00"; // Highlight Parabola in gold because it's a specific exact angle
             } else {
                 text = "Hyperbola";
+                color = "#00ffaa";
             }
             
             nameLabel.innerText = text;
+            nameLabel.style.color = color;
+            planeMat.color.set(color); // The slicing plane changes color to match the text!
         });
 
-        // Render Animation Loop
+        // 8. Animation Loop
         function animate() {
             requestAnimationFrame(animate);
-            coneGroup.rotation.y += 0.003; // Slow rotation for a 3D showcase effect
+            controls.update(); // Smooth damping for the camera
             renderer.render(scene, camera);
         }
         animate();
 
-        // Handle Browser Resizing
+        // 9. Handle Window Resizing gracefully
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
