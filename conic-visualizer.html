@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conic Sections Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(20, 20, 20, 0.85);
+            padding: 20px 40px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        h3 { margin: 0 0 15px 0; font-weight: 500; letter-spacing: 1px; }
+        #conicName { font-size: 24px; font-weight: bold; color: #ff3366; margin: 15px 0 0 0; }
+        input[type=range] { width: 300px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h3>Adjust Slicing Angle</h3>
+        <input type="range" id="angleSlider" min="0" max="90" value="0" step="1">
+        <p id="conicName">Circle</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Basic Scene Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1.2);
+        light.position.set(10, 20, 15);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040, 2));
+
+        // Glass-like Material for the Cones
+        const coneMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x0088ff, 
+            transparent: true, 
+            opacity: 0.35, 
+            side: THREE.DoubleSide,
+            shininess: 100
+        });
+
+        // Constructing the Double Cone
+        const coneGeo = new THREE.ConeGeometry(5, 10, 64, 1, false, 0, Math.PI * 2);
+        
+        const topCone = new THREE.Mesh(coneGeo, coneMaterial);
+        topCone.position.y = 5;
+        topCone.rotation.x = Math.PI; // Point downwards
+        
+        const bottomCone = new THREE.Mesh(coneGeo, coneMaterial);
+        bottomCone.position.y = -5; // Point upwards
+
+        const coneGroup = new THREE.Group();
+        coneGroup.add(topCone);
+        coneGroup.add(bottomCone);
+        scene.add(coneGroup);
+
+        // Intersecting Slicing Plane
+        const planeGeo = new THREE.PlaneGeometry(16, 16);
+        const planeMat = new THREE.MeshBasicMaterial({ 
+            color: 0xff3366, 
+            transparent: true, 
+            opacity: 0.6, 
+            side: THREE.DoubleSide 
+        });
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        scene.add(plane);
+
+        // Positioning
+        camera.position.set(0, 12, 28);
+        camera.lookAt(0, 0, 0);
+
+        // Slider Interaction Logic
+        const slider = document.getElementById('angleSlider');
+        const nameLabel = document.getElementById('conicName');
+
+        slider.addEventListener('input', (e) => {
+            const angleDeg = parseFloat(e.target.value);
+            plane.rotation.x = angleDeg * (Math.PI / 180);
+            
+            // Mathematical bounds for conic sections
+            // Cone base radius = 5, height = 10. Generator angle from vertical = atan(5/10) = 26.56°
+            // Critical angle from horizontal = 90 - 26.56 = 63.43°
+            let text = "Circle";
+            if (angleDeg === 0) {
+                text = "Circle";
+            } else if (angleDeg < 63) {
+                text = "Ellipse";
+            } else if (angleDeg >= 63 && angleDeg <= 64) {
+                text = "Parabola";
+            } else {
+                text = "Hyperbola";
+            }
+            
+            nameLabel.innerText = text;
+        });
+
+        // Render Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            coneGroup.rotation.y += 0.003; // Slow rotation for a 3D showcase effect
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Browser Resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
