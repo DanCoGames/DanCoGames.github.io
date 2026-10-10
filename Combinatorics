@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combinatorics & Probability Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        /* Ensure KaTeX uses white text in display mode */
+        .katex-display {
+            color: #ffffff;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 0.5rem;
+        }
+        .katex { color: #ffffff; }
+
+        /* Custom monochrome scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000; 
+            border-left: 1px solid #333333;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffffff; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cccccc; 
+        }
+        
+        /* Utility for breaking long numbers */
+        .break-all-num {
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8 bg-black text-white">
+
+    <header class="mb-8 border-b border-[#333333] pb-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-end gap-4">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">Combinatorics Pro</h1>
+                <p class="text-gray-400 text-sm mt-2 uppercase tracking-widest">Permutations, Combinations & Probability</p>
+            </div>
+            <div class="text-sm font-mono border border-[#333333] px-3 py-1">
+                SYSTEM: ACTIVE
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <!-- Interactive Calculator Section -->
+        <section class="border border-[#333333] p-6 bg-black">
+            <h2 class="text-xl font-bold mb-6 uppercase tracking-wider border-b border-[#333333] pb-2">Combinatorics Calculator</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <!-- Inputs -->
+                <div class="md:col-span-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold mb-2">Total Items (n):</label>
+                        <input type="number" id="n-input" value="10" min="0" step="1" class="w-full bg-black border border-[#333333] px-4 py-2 text-white font-mono focus:outline-none focus:ring-1 focus:ring-white transition-all" placeholder="Enter n">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2">Items Selected (r):</label>
+                        <input type="number" id="r-input" value="3" min="0" step="1" class="w-full bg-black border border-[#333333] px-4 py-2 text-white font-mono focus:outline-none focus:ring-1 focus:ring-white transition-all" placeholder="Enter r">
+                    </div>
+                    
+                    <div id="error-box" class="hidden border border-[#333333] bg-black text-white px-4 py-3 text-sm font-mono"></div>
+
+                    <button id="calc-btn" class="w-full bg-white text-black hover:bg-gray-200 font-bold py-3 px-4 transition-colors uppercase tracking-widest mt-2">
+                        Compute
+                    </button>
+                </div>
+
+                <!-- Outputs -->
+                <div class="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Permutation Result -->
+                    <div class="border border-[#333333] p-4 flex flex-col">
+                        <div class="flex justify-between items-start mb-2 border-b border-[#333333] pb-2">
+                            <span class="font-bold text-sm uppercase tracking-wider">Permutations</span>
+                            <span class="text-xs font-mono border border-[#333333] px-1">nPr</span>
+                        </div>
+                        <div id="katex-npr-formula" class="mb-4 min-h-[40px] flex items-center justify-center"></div>
+                        <div class="mt-auto">
+                            <span class="block text-xs text-gray-400 mb-1">Result (Order Matters):</span>
+                            <div id="res-npr" class="text-lg font-mono font-bold break-all-num">---</div>
+                        </div>
+                    </div>
+
+                    <!-- Combination Result -->
+                    <div class="border border-[#333333] p-4 flex flex-col">
+                        <div class="flex justify-between items-start mb-2 border-b border-[#333333] pb-2">
+                            <span class="font-bold text-sm uppercase tracking-wider">Combinations</span>
+                            <span class="text-xs font-mono border border-[#333333] px-1">nCr</span>
+                        </div>
+                        <div id="katex-ncr-formula" class="mb-4 min-h-[40px] flex items-center justify-center"></div>
+                        <div class="mt-auto">
+                            <span class="block text-xs text-gray-400 mb-1">Result (Order Doesn't Matter):</span>
+                            <div id="res-ncr" class="text-lg font-mono font-bold break-all-num">---</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Educational Content -->
+        <section class="border border-[#333333] p-6 md:p-8 bg-black mt-4">
+            <h2 class="text-2xl font-bold mb-8 uppercase tracking-wider border-b border-[#333333] pb-2">Concept Masterclass</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                
+                <!-- Fundamental Counting Principle -->
+                <div>
+                    <h3 class="text-lg font-bold mb-4 border border-white inline-block px-3 py-1">1. Fundamental Counting Principle</h3>
+                    <p class="text-gray-300 mb-4 text-sm leading-relaxed">
+                        If one event can occur in <span id="katex-m"></span> ways and a second independent event can occur in <span id="katex-n"></span> ways, then the total number of ways both events can occur together is their product.
+                    </p>
+                    <div id="katex-fcp" class="mb-4"></div>
+                    <div class="border border-[#333333] p-4 text-sm text-gray-400">
+                        <strong class="text-white block mb-1">Example:</strong>
+                        If you have 3 shirts and 4 pairs of pants, you can create <span id="katex-fcp-ex"></span> different outfits.
+                    </div>
+                </div>
+
+                <!-- Permutations -->
+                <div>
+                    <h3 class="text-lg font-bold mb-4 border border-white inline-block px-3 py-1">2. Permutations (Order Matters)</h3>
+                    <p class="text-gray-300 mb-4 text-sm leading-relaxed">
+                        A permutation is an arrangement of items in a specific order. Selecting a combination to a safe or determining 1st, 2nd, and 3rd place in a race are examples where order changes the outcome.
+                    </p>
+                    <div id="katex-perm-def" class="mb-4"></div>
+                    <div class="border border-[#333333] p-4 text-sm text-gray-400">
+                        <strong class="text-white block mb-1">Example:</strong>
+                        How many ways can 3 runners finish 1st, 2nd, and 3rd out of 8 competitors? 
+                        <span id="katex-perm-ex" class="block mt-2"></span>
+                    </div>
+                </div>
+
+                <!-- Combinations -->
+                <div>
+                    <h3 class="text-lg font-bold mb-4 border border-white inline-block px-3 py-1">3. Combinations (Order Doesn't Matter)</h3>
+                    <p class="text-gray-300 mb-4 text-sm leading-relaxed">
+                        A combination is a selection of items where the order does not matter. Forming a committee or drawing a hand of cards are examples. We divide permutations by <span id="katex-r-fact"></span> to remove duplicate arrangements.
+                    </p>
+                    <div id="katex-comb-def" class="mb-4"></div>
+                    <div class="border border-[#333333] p-4 text-sm text-gray-400">
+                        <strong class="text-white block mb-1">Example:</strong>
+                        How many 3-person committees can be formed from a group of 8 people?
+                        <span id="katex-comb-ex" class="block mt-2"></span>
+                    </div>
+                </div>
+
+                <!-- Basic Probability -->
+                <div>
+                    <h3 class="text-lg font-bold mb-4 border border-white inline-block px-3 py-1">4. Basic Probability</h3>
+                    <p class="text-gray-300 mb-4 text-sm leading-relaxed">
+                        Probability measures the likelihood of an event occurring. It is the ratio of successful outcomes to the total number of possible outcomes. Combinatorics is heavily used to calculate these outcomes.
+                    </p>
+                    <div id="katex-prob-def" class="mb-4"></div>
+                    <div class="border border-[#333333] p-4 text-sm text-gray-400">
+                        <strong class="text-white block mb-1">Example:</strong>
+                        Winning a lottery where you pick 6 correct numbers out of 49.
+                        <span id="katex-prob-ex" class="block mt-2"></span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // DOM Elements
+        const nInput = document.getElementById('n-input');
+        const rInput = document.getElementById('r-input');
+        const calcBtn = document.getElementById('calc-btn');
+        const errorBox = document.getElementById('error-box');
+        
+        const resNpr = document.getElementById('res-npr');
+        const resNcr = document.getElementById('res-ncr');
+
+        // Render static educational formulas with KaTeX
+        window.addEventListener('DOMContentLoaded', () => {
+            // General inline variables
+            katex.render("m", document.getElementById('katex-m'));
+            katex.render("n", document.getElementById('katex-n'));
+            katex.render("r!", document.getElementById('katex-r-fact'));
+            
+            // FCP
+            katex.render("Total = m \\times n", document.getElementById('katex-fcp'), {displayMode: true});
+            katex.render("3 \\times 4 = 12", document.getElementById('katex-fcp-ex'));
+            
+            // Permutations
+            katex.render("P(n, r) = _{n}P_{r} = \\frac{n!}{(n-r)!}", document.getElementById('katex-perm-def'), {displayMode: true});
+            katex.render("_{8}P_{3} = \\frac{8!}{(8-3)!} = 336", document.getElementById('katex-perm-ex'));
+            
+            // Combinations
+            katex.render("C(n, r) = _{n}C_{r} = \\binom{n}{r} = \\frac{n!}{r!(n-r)!}", document.getElementById('katex-comb-def'), {displayMode: true});
+            katex.render("_{8}C_{3} = \\frac{8!}{3!(8-3)!} = 56", document.getElementById('katex-comb-ex'));
+
+            // Probability
+            katex.render("P(E) = \\frac{\\text{Successful Outcomes}}{\\text{Total Possible Outcomes}}", document.getElementById('katex-prob-def'), {displayMode: true});
+            katex.render("P(\\text{Win}) = \\frac{1}{_{49}C_{6}} \\approx \\frac{1}{13,983,816}", document.getElementById('katex-prob-ex'));
+            
+            // Render initial calculator formulas
+            updateCalculatorFormulas(parseInt(nInput.value), parseInt(rInput.value));
+            
+            // Run initial calculation
+            performCalculations();
+        });
+
+        // Factorial function using BigInt to handle large numbers accurately
+        function factorial(num) {
+            let result = 1n;
+            for (let i = 2n; i <= BigInt(num); i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        function calculatePermutations(n, r) {
+            if (n < r) return 0n;
+            return factorial(n) / factorial(n - r);
+        }
+
+        function calculateCombinations(n, r) {
+            if (n < r) return 0n;
+            return factorial(n) / (factorial(r) * factorial(n - r));
+        }
+
+        function formatBigInt(bigIntValue) {
+            // Adds commas to large numbers for readability
+            return bigIntValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function updateCalculatorFormulas(n, r) {
+            const nStr = isNaN(n) ? 'n' : n;
+            const rStr = isNaN(r) ? 'r' : r;
+            
+            katex.render(`_{${nStr}}P_{${rStr}} = \\frac{${nStr}!}{(${nStr}-${rStr})!}`, document.getElementById('katex-npr-formula'), {throwOnError: false, displayMode: true});
+            katex.render(`_{${nStr}}C_{${rStr}} = \\binom{${nStr}}{${rStr}}`, document.getElementById('katex-ncr-formula'), {throwOnError: false, displayMode: true});
+        }
+
+        function performCalculations() {
+            errorBox.classList.add('hidden');
+            errorBox.innerHTML = '';
+
+            const nStr = nInput.value.trim();
+            const rStr = rInput.value.trim();
+
+            if (!nStr || !rStr) {
+                showError("INPUT_ERROR: Missing n or r value.");
+                return;
+            }
+
+            const n = parseInt(nStr);
+            const r = parseInt(rStr);
+
+            if (isNaN(n) || isNaN(r) || n < 0 || r < 0) {
+                showError("VALUE_ERROR: n and r must be positive integers.");
+                return;
+            }
+
+            if (r > n) {
+                showError("LOGIC_ERROR: r cannot be greater than n (Items selected cannot exceed total items).");
+                resNpr.textContent = "---";
+                resNcr.textContent = "---";
+                updateCalculatorFormulas(n, r);
+                return;
+            }
+            
+            if (n > 500) {
+                 showError("LIMIT_ERROR: Input too large. Please keep 'n' under 500 to prevent browser freezing.");
+                 resNpr.textContent = "---";
+                 resNcr.textContent = "---";
+                 return;
+            }
+
+            try {
+                // Update TeX formulas
+                updateCalculatorFormulas(n, r);
+
+                // Compute using BigInt
+                const pResult = calculatePermutations(n, r);
+                const cResult = calculateCombinations(n, r);
+
+                // Output results
+                resNpr.textContent = formatBigInt(pResult);
+                resNcr.textContent = formatBigInt(cResult);
+
+            } catch (err) {
+                console.error(err);
+                showError(`COMPUTATION_FAULT: ${err.message}.`);
+            }
+        }
+
+        function showError(msg) {
+            errorBox.innerHTML = `> ${msg}`;
+            errorBox.classList.remove('hidden');
+        }
+
+        // Event Listeners
+        calcBtn.addEventListener('click', performCalculations);
+        nInput.addEventListener('keypress', e => { if (e.key === 'Enter') performCalculations(); });
+        rInput.addEventListener('keypress', e => { if (e.key === 'Enter') performCalculations(); });
+
+    </script>
+</body>
+</html>
