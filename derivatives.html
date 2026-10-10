@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derivative Explorer Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Math.js for symbolic differentiation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    
+    <!-- Chart.js for graphing -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                        darker: '#0b1120',
+                        panel: '#1e293b',
+                        accent: '#06b6d4',
+                        accentHover: '#0891b2',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b1120;
+            color: #f8fafc;
+        }
+        .math-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar for better dark mode look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8">
+
+    <header class="mb-8 border-b border-slate-800 pb-4">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">Derivative Explorer Pro</h1>
+                <p class="text-slate-400 text-sm mt-1">Advanced calculus tool for engineering preparation</p>
+            </div>
+            <div class="flex items-center space-x-2 text-sm text-slate-400">
+                <span class="px-3 py-1 bg-panel rounded-full border border-slate-700">Powered by Math.js & Chart.js</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
+        
+        <!-- Left Column: Inputs and Results -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Input Panel -->
+            <section class="bg-panel rounded-2xl p-6 shadow-xl border border-slate-700/50">
+                <h2 class="text-xl font-semibold mb-4 text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                    </svg>
+                    Function Configuration
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Function f(x) =</label>
+                        <input type="text" id="func-input" value="x^3 - 2*x + 1" class="w-full bg-darker border border-slate-600 rounded-lg px-4 py-2 text-white math-font focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors" placeholder="e.g., sin(x) + x^2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Analyze at x =</label>
+                        <input type="number" id="x-val-input" value="2" step="any" class="w-full bg-darker border border-slate-600 rounded-lg px-4 py-2 text-white math-font focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors" placeholder="e.g., 2">
+                    </div>
+                    
+                    <div id="error-box" class="hidden bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm">
+                        <!-- Errors will appear here -->
+                    </div>
+
+                    <button id="calc-btn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-cyan-500/30 transition-all transform active:scale-95">
+                        Calculate & Graph
+                    </button>
+                </div>
+            </section>
+
+            <section class="bg-panel rounded-2xl p-6 shadow-xl border border-slate-700/50">
+                <h2 class="text-xl font-semibold mb-4 text-white">Point Analysis</h2>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center p-3 bg-darker rounded-lg border border-slate-700/50">
+                        <span class="text-slate-400">Position (x₀, y₀):</span>
+                        <span id="res-point" class="math-font text-cyan-300 font-medium">---</span>
+                    </div>
+                    <div class="flex flex-col p-3 bg-darker rounded-lg border border-slate-700/50 gap-1">
+                        <span class="text-slate-400 text-xs uppercase tracking-wider">Tangent Line Equation:</span>
+                        <span id="res-tangent" class="math-font text-emerald-400 font-semibold text-base overflow-x-auto whitespace-nowrap pb-1">---</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-darker rounded-lg border border-slate-700/50">
+                        <span class="text-slate-400">Slope (m):</span>
+                        <span id="res-slope" class="math-font text-white font-medium">---</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Right Column: Graph and Symbolic Results -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            
+            <!-- Graph Panel -->
+            <section class="bg-panel rounded-2xl p-4 shadow-xl border border-slate-700/50 flex-grow flex flex-col min-h-[400px]">
+                <div class="flex justify-between items-center mb-4 px-2">
+                    <h2 class="text-xl font-semibold text-white">Function & Tangent Visualization</h2>
+                    <div class="flex items-center gap-4 text-xs text-slate-400">
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-cyan-400 block"></span> f(x)</div>
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-rose-500 block"></span> Tangent</div>
+                    </div>
+                </div>
+                <div class="relative flex-grow w-full h-full bg-darker rounded-xl border border-slate-700/50 p-2">
+                    <canvas id="mathChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Symbolic Derivatives Panel -->
+            <section class="bg-panel rounded-2xl p-6 shadow-xl border border-slate-700/50">
+                <h2 class="text-xl font-semibold mb-4 text-white">Symbolic Derivatives</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <!-- 1st Derivative -->
+                    <div class="bg-darker p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-medium text-slate-400">First Derivative</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold bg-cyan-900/50 text-cyan-400">f'(x)</span>
+                        </div>
+                        <div id="sym-d1" class="math-font text-white mb-3 text-sm overflow-x-auto whitespace-nowrap pb-1">---</div>
+                        <div class="text-xs text-slate-500 mt-auto border-t border-slate-700 pt-2 flex justify-between">
+                            <span>Value at x₀:</span>
+                            <span id="val-d1" class="text-slate-300 math-font">---</span>
+                        </div>
+                    </div>
+
+                    <!-- 2nd Derivative -->
+                    <div class="bg-darker p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-medium text-slate-400">Second Derivative</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-900/50 text-purple-400">f''(x)</span>
+                        </div>
+                        <div id="sym-d2" class="math-font text-white mb-3 text-sm overflow-x-auto whitespace-nowrap pb-1">---</div>
+                        <div class="text-xs text-slate-500 mt-auto border-t border-slate-700 pt-2 flex justify-between">
+                            <span>Value at x₀:</span>
+                            <span id="val-d2" class="text-slate-300 math-font">---</span>
+                        </div>
+                    </div>
+
+                    <!-- 3rd Derivative -->
+                    <div class="bg-darker p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-medium text-slate-400">Third Derivative</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-900/50 text-amber-400">f'''(x)</span>
+                        </div>
+                        <div id="sym-d3" class="math-font text-white mb-3 text-sm overflow-x-auto whitespace-nowrap pb-1">---</div>
+                        <div class="text-xs text-slate-500 mt-auto border-t border-slate-700 pt-2 flex justify-between">
+                            <span>Value at x₀:</span>
+                            <span id="val-d3" class="text-slate-300 math-font">---</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Set Chart.js defaults for dark theme
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        
+        let chartInstance = null;
+
+        // DOM Elements
+        const funcInput = document.getElementById('func-input');
+        const xValInput = document.getElementById('x-val-input');
+        const calcBtn = document.getElementById('calc-btn');
+        const errorBox = document.getElementById('error-box');
+
+        // Results DOM
+        const resPoint = document.getElementById('res-point');
+        const resTangent = document.getElementById('res-tangent');
+        const resSlope = document.getElementById('res-slope');
+
+        const symD1 = document.getElementById('sym-d1');
+        const symD2 = document.getElementById('sym-d2');
+        const symD3 = document.getElementById('sym-d3');
+
+        const valD1 = document.getElementById('val-d1');
+        const valD2 = document.getElementById('val-d2');
+        const valD3 = document.getElementById('val-d3');
+
+        // Function to format numbers nicely
+        const formatNum = (num) => {
+            if (Math.abs(num) < 1e-10) return "0";
+            let rounded = math.round(num, 4);
+            return rounded.toString();
+        };
+
+        function performCalculations() {
+            // Clear previous errors
+            errorBox.classList.add('hidden');
+            errorBox.innerHTML = '';
+
+            const funcStr = funcInput.value.trim();
+            const x0Str = xValInput.value.trim();
+
+            if (!funcStr || !x0Str) {
+                showError("Please enter both a function and an x-value.");
+                return;
+            }
+
+            try {
+                const x0 = parseFloat(x0Str);
+                if (isNaN(x0)) throw new Error("Invalid x-value");
+
+                // 1. Parse original expression
+                const expr = math.parse(funcStr);
+                const compiledExpr = expr.compile();
+
+                // 2. Compute Symbolic Derivatives
+                const d1Node = math.derivative(expr, 'x');
+                const d2Node = math.derivative(d1Node, 'x');
+                const d3Node = math.derivative(d2Node, 'x');
+
+                // Simplify symbolic expressions for display
+                const sym1Str = math.simplify(d1Node).toString();
+                const sym2Str = math.simplify(d2Node).toString();
+                const sym3Str = math.simplify(d3Node).toString();
+
+                symD1.textContent = sym1Str;
+                symD2.textContent = sym2Str;
+                symD3.textContent = sym3Str;
+
+                // 3. Evaluate at x0
+                const scope = { x: x0 };
+                const y0 = compiledExpr.evaluate(scope);
+                const m1 = d1Node.compile().evaluate(scope);
+                const m2 = d2Node.compile().evaluate(scope);
+                const m3 = d3Node.compile().evaluate(scope);
+
+                // Update UI Values
+                valD1.textContent = formatNum(m1);
+                valD2.textContent = formatNum(m2);
+                valD3.textContent = formatNum(m3);
+                
+                resPoint.textContent = `(${formatNum(x0)}, ${formatNum(y0)})`;
+                resSlope.textContent = formatNum(m1);
+
+                // 4. Calculate Tangent Line: y - y0 = m(x - x0) => y = mx + (y0 - m*x0)
+                const c = y0 - (m1 * x0);
+                
+                // Format tangent equation beautifully
+                let tangentEq = `y = `;
+                if (Math.abs(m1) > 1e-10) {
+                    if (m1 === 1) tangentEq += `x`;
+                    else if (m1 === -1) tangentEq += `-x`;
+                    else tangentEq += `${formatNum(m1)}x`;
+                }
+                
+                if (Math.abs(c) > 1e-10) {
+                    if (tangentEq === `y = `) {
+                        tangentEq += `${formatNum(c)}`;
+                    } else {
+                        tangentEq += c > 0 ? ` + ${formatNum(c)}` : ` - ${formatNum(Math.abs(c))}`;
+                    }
+                } else if (tangentEq === `y = `) {
+                    tangentEq += `0`;
+                }
+                
+                resTangent.textContent = tangentEq;
+
+                // 5. Render Graph
+                renderGraph(compiledExpr, m1, c, x0, y0);
+
+            } catch (err) {
+                console.error(err);
+                showError(`Error processing mathematical expression: ${err.message}. Make sure you use valid syntax (e.g., 'x^2' instead of 'x**2', 'sin(x)', '2*x').`);
+            }
+        }
+
+        function showError(msg) {
+            errorBox.innerHTML = `<strong>Error:</strong> ${msg}`;
+            errorBox.classList.remove('hidden');
+        }
+
+        function renderGraph(compiledExpr, m, c, x0, y0) {
+            const ctx = document.getElementById('mathChart').getContext('2d');
+            
+            // Define graph window based on x0
+            const windowSize = 5;
+            const startX = x0 - windowSize;
+            const endX = x0 + windowSize;
+            const steps = 200;
+            const stepSize = (endX - startX) / steps;
+
+            const fData = [];
+            const tData = [];
+
+            // Generate points
+            for (let x = startX; x <= endX; x += stepSize) {
+                try {
+                    let y = compiledExpr.evaluate({ x: x });
+                    // Prevent giant spikes from asymptotes
+                    if (typeof y === 'number' && !isNaN(y) && isFinite(y) && Math.abs(y) < 1e6) {
+                        fData.push({ x: x, y: y });
+                    }
+                } catch(e) { /* ignore invalid domain points */ }
+
+                let ty = (m * x) + c;
+                if(isFinite(ty) && Math.abs(ty) < 1e6) {
+                    tData.push({ x: x, y: ty });
+                }
+            }
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'f(x)',
+                            data: fData,
+                            showLine: true,
+                            borderColor: '#22d3ee', // Tailwind cyan-400
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Tangent Line',
+                            data: tData,
+                            showLine: true,
+                            borderColor: '#f43f5e', // Tailwind rose-500
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                        },
+                        {
+                            label: 'Point (x₀, y₀)',
+                            data: [{ x: x0, y: y0 }],
+                            backgroundColor: '#f8fafc',
+                            borderColor: '#f8fafc',
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false,
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `(${formatNum(context.parsed.x)}, ${formatNum(context.parsed.y)})`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false // We built our own custom legend in HTML
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'center',
+                            grid: {
+                                color: '#334155', // Tailwind slate-700
+                                tickColor: '#334155'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'center',
+                            grid: {
+                                color: '#334155',
+                                tickColor: '#334155'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        calcBtn.addEventListener('click', performCalculations);
+        
+        // Allow pressing Enter in inputs to trigger calc
+        funcInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') performCalculations();
+        });
+        xValInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') performCalculations();
+        });
+
+        // Initialize on load
+        window.onload = performCalculations;
+
+    </script>
+</body>
+</html>
