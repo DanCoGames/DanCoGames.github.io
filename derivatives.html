@@ -14,6 +14,10 @@
     <!-- Chart.js for graphing -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -254,14 +258,10 @@
                 const d2Node = math.derivative(d1Node, 'x');
                 const d3Node = math.derivative(d2Node, 'x');
 
-                // Simplify symbolic expressions for display
-                const sym1Str = math.simplify(d1Node).toString();
-                const sym2Str = math.simplify(d2Node).toString();
-                const sym3Str = math.simplify(d3Node).toString();
-
-                symD1.textContent = sym1Str;
-                symD2.textContent = sym2Str;
-                symD3.textContent = sym3Str;
+                // Render symbolic expressions using KaTeX
+                katex.render(math.simplify(d1Node).toTex(), symD1, {throwOnError: false, displayMode: true});
+                katex.render(math.simplify(d2Node).toTex(), symD2, {throwOnError: false, displayMode: true});
+                katex.render(math.simplify(d3Node).toTex(), symD3, {throwOnError: false, displayMode: true});
 
                 // 3. Evaluate at x0
                 const scope = { x: x0 };
@@ -281,25 +281,25 @@
                 // 4. Calculate Tangent Line: y - y0 = m(x - x0) => y = mx + (y0 - m*x0)
                 const c = y0 - (m1 * x0);
                 
-                // Format tangent equation beautifully
-                let tangentEq = `y = `;
+                // Format tangent equation beautifully in TeX
+                let tangentTex = `y = `;
                 if (Math.abs(m1) > 1e-10) {
-                    if (m1 === 1) tangentEq += `x`;
-                    else if (m1 === -1) tangentEq += `-x`;
-                    else tangentEq += `${formatNum(m1)}x`;
+                    if (m1 === 1) tangentTex += `x`;
+                    else if (m1 === -1) tangentTex += `-x`;
+                    else tangentTex += `${formatNum(m1)}x`;
                 }
                 
                 if (Math.abs(c) > 1e-10) {
-                    if (tangentEq === `y = `) {
-                        tangentEq += `${formatNum(c)}`;
+                    if (tangentTex === `y = `) {
+                        tangentTex += `${formatNum(c)}`;
                     } else {
-                        tangentEq += c > 0 ? ` + ${formatNum(c)}` : ` - ${formatNum(Math.abs(c))}`;
+                        tangentTex += c > 0 ? ` + ${formatNum(c)}` : ` - ${formatNum(Math.abs(c))}`;
                     }
-                } else if (tangentEq === `y = `) {
-                    tangentEq += `0`;
+                } else if (tangentTex === `y = `) {
+                    tangentTex += `0`;
                 }
                 
-                resTangent.textContent = tangentEq;
+                katex.render(tangentTex, resTangent, {throwOnError: false, displayMode: true});
 
                 // 5. Render Graph
                 renderGraph(compiledExpr, m1, c, x0, y0);
